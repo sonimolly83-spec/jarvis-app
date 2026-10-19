@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Jarvis Pro</title>
+<title>Jarvis Assistant</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
   body { background: #090d16; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  header { padding: 12px 14px; background: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
-  .title { font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
+  header { padding: 12px 16px; background: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+  .title { font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
   .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
   .top-btns { display: flex; gap: 6px; }
-  .btn-sm { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; }
+  .btn-sm { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 12px; border-radius: 14px; font-size: 12px; cursor: pointer; }
   .btn-sm.active { background: #059669; color: #fff; border-color: #10b981; }
   #keyBox { display: none; padding: 10px; background: #1e293b; gap: 8px; border-bottom: 1px solid #334155; }
   #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -32,7 +32,7 @@
 <body>
 
 <header>
-  <div class="title"><span class="dot"></span> Jarvis Pro</div>
+  <div class="title"><span class="dot"></span> Jarvis Assistant</div>
   <div class="top-btns">
     <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto-Mic: OFF</button>
     <button class="btn-sm" onclick="promptImageGen()">🎨 Create</button>
@@ -46,7 +46,7 @@
 </div>
 
 <div id="chat">
-  <div class="msg bot">Arrey Aadi guru! Jarvis Pro (Gemini 3.8 Flash) chalu hai! Ab main bolungi bhi, Auto-Mic pe lagataar sunungi bhi, aur photos generate/edit bhi karungi!</div>
+  <div class="msg bot">Hello Aditya! Jarvis is online and ready. How can I help you today?</div>
 </div>
 
 <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
@@ -54,7 +54,7 @@
 <div class="bar">
   <button class="icon-btn" onclick="document.getElementById('imgUpload').click()">📷</button>
   <button id="micBtn" class="icon-btn" onclick="startSingleMic()">🎤</button>
-  <input type="text" id="t" placeholder="Bolo ya likho ('photo banao...')" onkeypress="if(event.key==='Enter') send()">
+  <input type="text" id="t" placeholder="Type or speak..." onkeypress="if(event.key==='Enter') send()">
   <button class="icon-btn send-btn" onclick="send()">➤</button>
 </div>
 
@@ -64,7 +64,6 @@ try { defaultKey = atob("").trim(); } catch(e) {}
 let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
 if (!key) document.getElementById("keyBox").style.display = "flex";
 
-let activeModel = "models/gemini-3.8-flash";
 let autoMic = false;
 let isSpeaking = false;
 let currentPhotoBase64 = null;
@@ -80,32 +79,19 @@ function saveKey() {
   key = document.getElementById("kInp").value.trim();
   localStorage.setItem("API_KEY", key);
   document.getElementById("keyBox").style.display = "none";
-  addMsg("API Key save ho gayi guru! Ab baat karo.", "bot");
-}
-
-async function detectWorkingModel() {
-  try {
-    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?key=" + key);
-    let d = await r.json();
-    if (d.models) {
-      let flashModels = d.models.map(m => m.name).filter(n => n.includes("flash") && !n.includes("2.0"));
-      if (flashModels.includes("models/gemini-3.8-flash")) return "models/gemini-3.8-flash";
-      if (flashModels.length > 0) return flashModels[flashModels.length - 1];
-    }
-  } catch(e) {}
-  return "models/gemini-3.8-flash";
+  addMsg("API Key saved successfully!", "bot");
 }
 
 let chat = [
-  {role:"user", parts:[{text:"Tu Aadi ki pakki Kanpuria female best friend Jarvis hai. Super fast, natural Hinglish mein sirf 1 chhota sentence bol jaise real ladki phone call pe baat karti hai. Theth Kanpuria chill andaz rakh. No emoji, no stars."}]},
-  {role:"model", parts:[{text:"Haan Aadi guru bol, ka scene hai?"}]}
+  {role:"user", parts:[{text:"You are Jarvis, a professional, helpful, and concise AI assistant. Reply in clear, natural language."}]},
+  {role:"model", parts:[{text:"Hello! I am ready."}]}
 ];
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 if (SpeechRec) {
   rec = new SpeechRec();
-  rec.lang = "hi-IN";
+  rec.lang = "en-US";
   rec.interimResults = false;
   rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
   rec.onend = () => {
@@ -126,22 +112,19 @@ function toggleAutoMic() {
   let btn = document.getElementById("autoMicBtn");
   btn.innerText = autoMic ? "🎙️ Auto-Mic: ON" : "🎙️ Auto-Mic: OFF";
   btn.classList.toggle("active", autoMic);
-  if (autoMic && rec) {
-    try { rec.start(); } catch(e){}
-  } else if (rec) {
-    try { rec.stop(); } catch(e){}
-  }
+  if (autoMic && rec) { try { rec.start(); } catch(e){} }
+  else if (rec) { try { rec.stop(); } catch(e){} }
 }
 
 function startSingleMic() {
-  if (!rec) { alert("Mic permission allow karein!"); return; }
+  if (!rec) { alert("Microphone not supported on this device."); return; }
   try { rec.start(); } catch(e) { rec.stop(); }
 }
 
 function promptImageGen() {
   let p = document.getElementById("t").value.trim();
   if (!p) {
-    document.getElementById("t").value = "photo banao ";
+    document.getElementById("t").value = "generate image of ";
     document.getElementById("t").focus();
   } else {
     generateImage(p);
@@ -150,16 +133,16 @@ function promptImageGen() {
 }
 
 function generateImage(promptText) {
-  addMsg("🎨 Photo bana rahi hoon: " + promptText, "bot");
-  speak("Ruko guru, abhi mast photo banati hoon.");
+  addMsg("Generating image: " + promptText, "bot");
+  speak("Generating your image now.");
   let seed = Math.floor(Math.random() * 99999);
-  let cleanPrompt = promptText.replace(/photo banao|image banao|pic banao|generate|draw/gi, "").trim() || "futuristic sports car";
-  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", ultra detailed, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
+  let cleanPrompt = promptText.replace(/photo banao|image banao|generate image|draw/gi, "").trim() || "futuristic landscape";
+  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", high quality, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
 
   let c = document.getElementById("chat");
   let d = document.createElement("div");
   d.className = "msg bot";
-  d.innerHTML = `Yeh lo guru tumhari photo:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip" style="text-decoration:none;">⬇ Full HD Download</a></div>`;
+  d.innerHTML = `Here is your image:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip" style="text-decoration:none;">⬇ Download HD</a></div>`;
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
 }
@@ -173,7 +156,7 @@ function handleImageUpload(e) {
     let dataUrl = evt.target.result;
     currentPhotoBase64 = dataUrl.split(",")[1];
     addPhotoEditorCard(dataUrl);
-    speak("Photo aa gayi guru! Niche filter button dabao ya mujhse is photo ke baare mein kuch bhi pooch lo.");
+    speak("Photo loaded. Select a filter or ask me anything about it.");
   };
   reader.readAsDataURL(file);
 }
@@ -183,14 +166,14 @@ function addPhotoEditorCard(dataUrl) {
   let id = "canvas_" + Date.now();
   let d = document.createElement("div");
   d.className = "msg user";
-  d.innerHTML = `Photo Selected:<br><canvas id="${id}"></canvas>
+  d.innerHTML = `Photo Uploaded:<br><canvas id="${id}"></canvas>
     <div class="edit-bar">
       <button class="chip" onclick="applyFilter('${id}','none')">Original</button>
       <button class="chip" onclick="applyFilter('${id}','contrast(1.3) saturate(1.35) brightness(1.05)')">✨ HD Boost</button>
       <button class="chip" onclick="applyFilter('${id}','sepia(0.35) contrast(1.2) saturate(1.4)')">🎬 Cinematic</button>
       <button class="chip" onclick="applyFilter('${id}','hue-rotate(190deg) saturate(1.8) contrast(1.2)')">🔮 Cyberpunk</button>
       <button class="chip" onclick="applyFilter('${id}','grayscale(1) contrast(1.4)')">🖤 B&W</button>
-      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save Edit</button>
+      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save</button>
     </div>`;
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
@@ -223,31 +206,19 @@ function downloadCanvas(id) {
   a.click();
 }
 
-async function callGemini(modelName) {
-  let r = await fetch("https://generativelanguage.googleapis.com/v1beta/" + modelName + ":generateContent?key=" + key, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      contents: chat.slice(-6),
-      generationConfig: { maxOutputTokens: 60, temperature: 0.75 }
-    })
-  });
-  return await r.json();
-}
-
 async function send() {
   let inp = document.getElementById("t");
   let msg = inp.value.trim();
   if (!msg) return;
   if (!key) {
     document.getElementById("keyBox").style.display = "flex";
-    addMsg("Upar Key box mein apni Gemini API Key daal ke Save karo guru!", "bot");
+    addMsg("Please enter your Gemini API Key in the top box.", "bot");
     return;
   }
   inp.value = "";
   addMsg(msg, "user");
 
-  if (/photo banao|image banao|pic banao|generate image|draw/i.test(msg)) {
+  if (/generate image|draw|image banao|photo banao/i.test(msg)) {
     generateImage(msg);
     return;
   }
@@ -260,14 +231,18 @@ async function send() {
   chat.push({role:"user", parts: userParts});
 
   try {
-    let d = await callGemini(activeModel);
-    if (d.error) {
-      activeModel = await detectWorkingModel();
-      d = await callGemini(activeModel);
-    }
+    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + key, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        contents: chat.slice(-6),
+        generationConfig: { maxOutputTokens: 100, temperature: 0.7 }
+      })
+    });
+    let d = await r.json();
     if (d.error) throw new Error(d.error.message);
     let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!ans) throw new Error("Dobara bolo guru.");
+    if (!ans) throw new Error("No response received.");
     ans = ans.replace(/[*#_~`]/g, "").trim();
     addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
@@ -282,30 +257,26 @@ function speak(txt) {
   isSpeaking = true;
   if (rec) { try { rec.stop(); } catch(e){} }
 
-  let doneSpeaking = () => {
+  let done = () => {
     isSpeaking = false;
     if (autoMic && rec) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
     }
   };
 
-  let cloudUrl = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(txt);
-  let a = new Audio(cloudUrl);
-  a.playbackRate = 1.08;
-  a.onended = doneSpeaking;
-  a.onerror = () => {
-    if (window.speechSynthesis) {
-      let u = new SpeechSynthesisUtterance(txt);
-      u.lang = "hi-IN";
-      u.rate = 1.08;
-      u.pitch = 1.15;
-      u.onend = doneSpeaking;
-      window.speechSynthesis.speak(u);
-    } else {
-      doneSpeaking();
-    }
-  };
-  a.play().catch(() => a.onerror());
+  // Direct Browser Native Speech Synthesis (100% reliable voice output)
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    let u = new SpeechSynthesisUtterance(txt);
+    u.lang = "en-US";
+    u.rate = 1.05;
+    u.pitch = 1.1;
+    u.onend = done;
+    u.onerror = done;
+    window.speechSynthesis.speak(u);
+  } else {
+    done();
+  }
 }
 
 function addMsg(txt, cls) {
