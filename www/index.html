@@ -2,48 +2,72 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Jarvis v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jarvis AI Pro</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-  body { background: #0b0f19; color: #fff; height: 100vh; display: flex; flex-direction: column; }
-  header { padding: 14px 16px; background: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
-  h2 { font-size: 16px; color: #38bdf8; }
-  .key-btn { background: #1f2937; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 12px; font-size: 12px; cursor: pointer; }
-  #keyBox { display: none; padding: 10px; background: #1f2937; gap: 8px; border-bottom: 1px solid #374151; }
-  #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
-  .user { background: #0284c7; align-self: flex-end; border-bottom-right-radius: 2px; }
-  .bot { background: #1f2937; align-self: flex-start; border-bottom-left-radius: 2px; }
-  .bar { padding: 10px 12px; background: #111827; display: flex; gap: 8px; border-top: 1px solid #1f2937; }
-  input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #374151; background: #0b0f19; color: #fff; outline: none; }
-  button.send { background: #38bdf8; color: #000; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+  body { background: #090d16; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 12px 14px; background: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+  .title { font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
+  .top-btns { display: flex; gap: 6px; }
+  .btn-sm { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; }
+  .btn-sm.active { background: #059669; color: #fff; border-color: #10b981; }
+  #keyBox { display: none; padding: 10px; background: #1e293b; gap: 8px; border-bottom: 1px solid #334155; }
+  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+  .user { background: #0284c7; align-self: flex-end; border-bottom-right-radius: 3px; }
+  .bot { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #334155; }
+  .msg img, .msg canvas { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
+  .edit-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 8px; border-radius: 10px; font-size: 11px; cursor: pointer; }
+  .bar { padding: 10px; background: #111827; display: flex; align-items: center; gap: 6px; border-top: 1px solid #1e293b; }
+  #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #334155; background: #090d16; color: #fff; outline: none; font-size: 14px; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #1e293b; color: #fff; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .icon-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
+  .send-btn { background: #38bdf8; color: #000; font-weight: bold; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 </style>
 </head>
 <body>
+
 <header>
-  <h2>Jarvis v2 (Kanpuria AI)</h2>
-  <button class="key-btn" onclick="toggleKey()">🔑 API Key</button>
+  <div class="title"><span class="dot"></span> Jarvis Pro</div>
+  <div class="top-btns">
+    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto-Mic: OFF</button>
+    <button class="btn-sm" onclick="promptImageGen()">🎨 Create</button>
+    <button class="btn-sm" onclick="toggleKey()">🔑 Key</button>
+  </div>
 </header>
+
 <div id="keyBox">
-  <input type="text" id="kInp" placeholder="AIzaSy... wali API Key yahan paste karein">
-  <button class="key-btn" onclick="saveKey()">Save</button>
+  <input type="text" id="kInp" style="flex:1;padding:8px;border-radius:8px;border:1px solid #475569;background:#090d16;color:#fff;" placeholder="Paste Gemini API Key (AIzaSy...)">
+  <button class="btn-sm active" onclick="saveKey()">Save</button>
 </div>
+
 <div id="chat">
-  <div class="msg bot">Arrey Aadi guru! Jarvis v2 chalu hai, batao ka haal chaal hain?</div>
+  <div class="msg bot">Arrey Aadi guru! Ab main bolungi bhi, lagataar mic pe sunungi bhi, aur photos generate ya edit bhi karungi! Batao ka scene hai?</div>
 </div>
+
+<input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+
 <div class="bar">
-  <input type="text" id="t" placeholder="Yahan likhein..." onkeypress="if(event.key==='Enter') send()">
-  <button class="send" onclick="send()">➤</button>
+  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()" title="Upload/Edit Photo">📷</button>
+  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Speak">🎤</button>
+  <input type="text" id="t" placeholder="Bolo ya likho ('photo banao...')" onkeypress="if(event.key==='Enter') send()">
+  <button class="icon-btn send-btn" onclick="send()">➤</button>
 </div>
+
 <script>
 let defaultKey = "";
 try { defaultKey = atob("").trim(); } catch(e) {}
 let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
+if (!key) document.getElementById("keyBox").style.display = "flex";
 
-if (!key) {
-  document.getElementById("keyBox").style.display = "flex";
-}
+let autoMic = false;
+let isSpeaking = false;
+let currentPhotoBase64 = null;
+let currentPhotoMime = "image/jpeg";
 
 function toggleKey() {
   let b = document.getElementById("keyBox");
@@ -55,13 +79,137 @@ function saveKey() {
   key = document.getElementById("kInp").value.trim();
   localStorage.setItem("API_KEY", key);
   document.getElementById("keyBox").style.display = "none";
-  addMsg("API Key save ho gayi guru! Ab baat karo.", "bot");
+  addMsg("API Key save ho gayi guru! Ab dhadalle se chalega.", "bot");
 }
 
 let chat = [
-  {role:"user", parts:[{text:"Tu Aadi ki pakki Kanpuria female friend Jarvis hai. Super fast, natural Hinglish mein sirf 1 chhota sentence bol. Chill aur theth Kanpuria andaz rakh. No emoji, no stars."}]},
+  {role:"user", parts:[{text:"Tu Aadi ki pakki Kanpuria female best friend Jarvis hai. Super fast, natural Hinglish mein sirf 1 chhota sentence bol jaise real ladki phone call pe baat karti hai. Theth Kanpuria chill andaz rakh. No emoji, no stars."}]},
   {role:"model", parts:[{text:"Haan Aadi guru bol, ka scene hai?"}]}
 ];
+
+// Speech Recognition (Continuous + Auto-Restart)
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+if (SpeechRec) {
+  rec = new SpeechRec();
+  rec.lang = "hi-IN";
+  rec.interimResults = false;
+  rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
+  rec.onend = () => {
+    document.getElementById("micBtn").classList.remove("listening");
+    if (autoMic && !isSpeaking) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
+    }
+  };
+  rec.onresult = (e) => {
+    let txt = e.results[0][0].transcript;
+    document.getElementById("t").value = txt;
+    send();
+  };
+}
+
+function toggleAutoMic() {
+  autoMic = !autoMic;
+  let btn = document.getElementById("autoMicBtn");
+  btn.innerText = autoMic ? "🎙️ Auto-Mic: ON" : "🎙️ Auto-Mic: OFF";
+  btn.classList.toggle("active", autoMic);
+  if (autoMic && rec) {
+    try { rec.start(); } catch(e){}
+  } else if (rec) {
+    try { rec.stop(); } catch(e){}
+  }
+}
+
+function startSingleMic() {
+  if (!rec) { alert("Mic permission allow karein!"); return; }
+  try { rec.start(); } catch(e) { rec.stop(); }
+}
+
+function promptImageGen() {
+  let p = document.getElementById("t").value.trim();
+  if (!p) {
+    document.getElementById("t").value = "photo banao ";
+    document.getElementById("t").focus();
+  } else {
+    generateImage(p);
+    document.getElementById("t").value = "";
+  }
+}
+
+function generateImage(promptText) {
+  addMsg("🎨 Photo bana rahi hoon: " + promptText, "bot");
+  speak("Ruko guru, abhi mast photo banati hoon.");
+  let seed = Math.floor(Math.random() * 99999);
+  let cleanPrompt = promptText.replace(/photo banao|image banao|generate|draw/gi, "").trim() || "cool futuristic car";
+  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", ultra detailed, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
+
+  let c = document.getElementById("chat");
+  let d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `Yeh lo guru tumhari photo:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip" style="text-decoration:none;">⬇ Full HD Download</a></div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+// Photo Upload & Studio Editor + Gemini Vision
+function handleImageUpload(e) {
+  let file = e.target.files[0];
+  if (!file) return;
+  currentPhotoMime = file.type || "image/jpeg";
+  let reader = new FileReader();
+  reader.onload = function(evt) {
+    let dataUrl = evt.target.result;
+    currentPhotoBase64 = dataUrl.split(",")[1];
+    addPhotoEditorCard(dataUrl);
+    speak("Photo aa gayi guru! Niche filter button dabao ya mujhse kuch bhi pooch lo.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function addPhotoEditorCard(dataUrl) {
+  let c = document.getElementById("chat");
+  let id = "canvas_" + Date.now();
+  let d = document.createElement("div");
+  d.className = "msg user";
+  d.innerHTML = `Photo Selected:<br><canvas id="${id}"></canvas>
+    <div class="edit-bar">
+      <button class="chip" onclick="applyFilter('${id}','none')">Original</button>
+      <button class="chip" onclick="applyFilter('${id}','contrast(1.3) saturate(1.35) brightness(1.05)')">✨ HD Boost</button>
+      <button class="chip" onclick="applyFilter('${id}','sepia(0.35) contrast(1.2) saturate(1.4)')">🎬 Cinematic</button>
+      <button class="chip" onclick="applyFilter('${id}','hue-rotate(190deg) saturate(1.8) contrast(1.2)')">🔮 Cyberpunk</button>
+      <button class="chip" onclick="applyFilter('${id}','grayscale(1) contrast(1.4)')">🖤 B&W</button>
+      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save Edit</button>
+    </div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+
+  let cvs = document.getElementById(id);
+  let ctx = cvs.getContext("2d");
+  let img = new Image();
+  img.onload = () => {
+    cvs.width = img.width;
+    cvs.height = img.height;
+    cvs._origImg = img;
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = dataUrl;
+}
+
+function applyFilter(id, flt) {
+  let cvs = document.getElementById(id);
+  if (!cvs || !cvs._origImg) return;
+  let ctx = cvs.getContext("2d");
+  ctx.filter = flt;
+  ctx.drawImage(cvs._origImg, 0, 0);
+}
+
+function downloadCanvas(id) {
+  let cvs = document.getElementById(id);
+  let a = document.createElement("a");
+  a.download = "Jarvis_Edited_" + Date.now() + ".jpg";
+  a.href = cvs.toDataURL("image/jpeg", 0.95);
+  a.click();
+}
 
 async function send() {
   let inp = document.getElementById("t");
@@ -69,12 +217,24 @@ async function send() {
   if (!msg) return;
   if (!key) {
     document.getElementById("keyBox").style.display = "flex";
-    addMsg("Guru upar wale box mein apni Gemini API Key paste karke Save daba do!", "bot");
+    addMsg("Upar Key box mein apni Gemini API Key daal ke Save karo guru!", "bot");
     return;
   }
   inp.value = "";
   addMsg(msg, "user");
-  chat.push({role:"user", parts:[{text:msg}]});
+
+  // Check if user asked for photo generation
+  if (/photo banao|image banao|pic banao|generate image|draw/i.test(msg)) {
+    generateImage(msg);
+    return;
+  }
+
+  let userParts = [{text: msg}];
+  if (currentPhotoBase64) {
+    userParts.push({inlineData: {mimeType: currentPhotoMime, data: currentPhotoBase64}});
+    currentPhotoBase64 = null;
+  }
+  chat.push({role:"user", parts: userParts});
 
   try {
     let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + key, {
@@ -86,36 +246,54 @@ async function send() {
       })
     });
     let d = await r.json();
-
-    if (d.error) {
-      throw new Error(d.error.message);
-    }
+    if (d.error) throw new Error(d.error.message);
     let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!ans) {
-      throw new Error("Empty response aaya, dobara bhejo.");
-    }
-    ans = ans.trim();
+    if (!ans) throw new Error("Dobara बोलो guru.");
+    ans = ans.replace(/[*#_~`]/g, "").trim();
     addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
     speak(ans);
   } catch(e) {
     chat.pop();
-    addMsg("Dikkat aayi: " + e.message, "bot");
+    addMsg("Error: " + e.message, "bot");
   }
 }
 
+// Dual-Engine Clear Female Voice (Local Edge-TTS Neural + Cloud Female TTS)
 function speak(txt) {
-  try {
-    let u = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(txt);
-    let a = new Audio(u);
-    a.play().catch(() => {
+  isSpeaking = true;
+  if (rec) { try { rec.stop(); } catch(e){} }
+
+  let doneSpeaking = () => {
+    isSpeaking = false;
+    if (autoMic && rec) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 300);
+    }
+  };
+
+  // Try Termux Edge-TTS Neural Voice Server first (if running on port 8765), else Cloud Female TTS
+  let localNeural = new Audio("http://127.0.0.1:8765/tts?text=" + encodeURIComponent(txt));
+  localNeural.onended = doneSpeaking;
+  localNeural.onerror = () => {
+    let cloudUrl = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(txt);
+    let a = new Audio(cloudUrl);
+    a.playbackRate = 1.08;
+    a.onended = doneSpeaking;
+    a.onerror = () => {
       if (window.speechSynthesis) {
-        let s = new SpeechSynthesisUtterance(txt);
-        s.lang = "hi-IN";
-        window.speechSynthesis.speak(s);
+        let u = new SpeechSynthesisUtterance(txt);
+        u.lang = "hi-IN";
+        u.rate = 1.08;
+        u.pitch = 1.15;
+        u.onend = doneSpeaking;
+        window.speechSynthesis.speak(u);
+      } else {
+        doneSpeaking();
       }
-    });
-  } catch(e) {}
+    };
+    a.play().catch(doneSpeaking);
+  };
+  localNeural.play().catch(() => localNeural.onerror());
 }
 
 function addMsg(txt, cls) {
