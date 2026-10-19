@@ -2,248 +2,62 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Jarvis Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis Pro 3.8</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-  body { background: #090d16; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  header { padding: 12px 16px; background: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
-  .title { font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-  .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
-  .top-btns { display: flex; gap: 6px; }
-  .btn-sm { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 12px; border-radius: 14px; font-size: 12px; cursor: pointer; }
-  .btn-sm.active { background: #059669; color: #fff; border-color: #10b981; }
-  #keyBox { display: none; padding: 10px; background: #1e293b; gap: 8px; border-bottom: 1px solid #334155; }
-  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
-  .user { background: #0284c7; align-self: flex-end; border-bottom-right-radius: 3px; }
-  .bot { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #334155; }
-  .msg img, .msg canvas { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
-  .edit-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .chip { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 8px; border-radius: 10px; font-size: 11px; cursor: pointer; }
-  .bar { padding: 10px; background: #111827; display: flex; align-items: center; gap: 6px; border-top: 1px solid #1e293b; }
-  #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #334155; background: #090d16; color: #fff; outline: none; font-size: 14px; }
-  .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #1e293b; color: #fff; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .icon-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
-  .send-btn { background: #38bdf8; color: #000; font-weight: bold; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 14px; background: #111827; text-align: center; color: #38bdf8; font-weight: bold; font-size: 16px; }
+  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+  .user { background: #0284c7; align-self: flex-end; }
+  .bot { background: #1f2937; align-self: flex-start; }
+  .bar { padding: 10px; background: #111827; display: flex; gap: 8px; }
+  input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #374151; background: #0b0f19; color: #fff; outline: none; }
+  button { background: #38bdf8; border: none; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
-
-<header>
-  <div class="title"><span class="dot"></span> Jarvis Assistant</div>
-  <div class="top-btns">
-    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto-Mic: OFF</button>
-    <button class="btn-sm" onclick="promptImageGen()">🎨 Create</button>
-    <button class="btn-sm" onclick="toggleKey()">🔑 Key</button>
-  </div>
-</header>
-
-<div id="keyBox">
-  <input type="text" id="kInp" style="flex:1;padding:8px;border-radius:8px;border:1px solid #475569;background:#090d16;color:#fff;" placeholder="Paste Gemini API Key (AIzaSy...)">
-  <button class="btn-sm active" onclick="saveKey()">Save</button>
-</div>
-
+<header>Jarvis Pro (Gemini 3.8 Flash)</header>
 <div id="chat">
-  <div class="msg bot">Hello Aditya! Jarvis is online and ready. How can I help you today?</div>
+  <div class="msg bot">Hello Aditya! Pehle message mein apni Gemini API Key paste karo.</div>
 </div>
-
-<input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-
 <div class="bar">
-  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()">📷</button>
-  <button id="micBtn" class="icon-btn" onclick="startSingleMic()">🎤</button>
-  <input type="text" id="t" placeholder="Type or speak..." onkeypress="if(event.key==='Enter') send()">
-  <button class="icon-btn send-btn" onclick="send()">➤</button>
+  <input type="text" id="t" placeholder="Type message or API Key..." onkeypress="if(event.key==='Enter') send()">
+  <button onclick="send()">Send</button>
 </div>
-
 <script>
-let defaultKey = "";
-try { defaultKey = atob("").trim(); } catch(e) {}
-let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
-if (!key) document.getElementById("keyBox").style.display = "flex";
-
-let autoMic = false;
-let isSpeaking = false;
-let currentPhotoBase64 = null;
-let currentPhotoMime = "image/jpeg";
-
-function toggleKey() {
-  let b = document.getElementById("keyBox");
-  b.style.display = b.style.display === "flex" ? "none" : "flex";
-  document.getElementById("kInp").value = key;
-}
-
-function saveKey() {
-  key = document.getElementById("kInp").value.trim();
-  localStorage.setItem("API_KEY", key);
-  document.getElementById("keyBox").style.display = "none";
-  addMsg("API Key saved successfully!", "bot");
-}
-
+let key = localStorage.getItem("API_KEY") || "";
 let chat = [
-  {role:"user", parts:[{text:"You are Jarvis, a professional, helpful, and concise AI assistant. Reply in clear, natural language."}]},
-  {role:"model", parts:[{text:"Hello! I am ready."}]}
+  {role:"user", parts:[{text:"You are Jarvis, a helpful AI assistant."}]},
+  {role:"model", parts:[{text:"Hello! Ready."}]}
 ];
-
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null;
-if (SpeechRec) {
-  rec = new SpeechRec();
-  rec.lang = "en-US";
-  rec.interimResults = false;
-  rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
-  rec.onend = () => {
-    document.getElementById("micBtn").classList.remove("listening");
-    if (autoMic && !isSpeaking) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
-    }
-  };
-  rec.onresult = (e) => {
-    let txt = e.results[0][0].transcript;
-    document.getElementById("t").value = txt;
-    send();
-  };
-}
-
-function toggleAutoMic() {
-  autoMic = !autoMic;
-  let btn = document.getElementById("autoMicBtn");
-  btn.innerText = autoMic ? "🎙️ Auto-Mic: ON" : "🎙️ Auto-Mic: OFF";
-  btn.classList.toggle("active", autoMic);
-  if (autoMic && rec) { try { rec.start(); } catch(e){} }
-  else if (rec) { try { rec.stop(); } catch(e){} }
-}
-
-function startSingleMic() {
-  if (!rec) { alert("Microphone not supported on this device."); return; }
-  try { rec.start(); } catch(e) { rec.stop(); }
-}
-
-function promptImageGen() {
-  let p = document.getElementById("t").value.trim();
-  if (!p) {
-    document.getElementById("t").value = "generate image of ";
-    document.getElementById("t").focus();
-  } else {
-    generateImage(p);
-    document.getElementById("t").value = "";
-  }
-}
-
-function generateImage(promptText) {
-  addMsg("Generating image: " + promptText, "bot");
-  speak("Generating your image now.");
-  let seed = Math.floor(Math.random() * 99999);
-  let cleanPrompt = promptText.replace(/photo banao|image banao|generate image|draw/gi, "").trim() || "futuristic landscape";
-  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", high quality, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
-
-  let c = document.getElementById("chat");
-  let d = document.createElement("div");
-  d.className = "msg bot";
-  d.innerHTML = `Here is your image:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip" style="text-decoration:none;">⬇ Download HD</a></div>`;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-}
-
-function handleImageUpload(e) {
-  let file = e.target.files[0];
-  if (!file) return;
-  currentPhotoMime = file.type || "image/jpeg";
-  let reader = new FileReader();
-  reader.onload = function(evt) {
-    let dataUrl = evt.target.result;
-    currentPhotoBase64 = dataUrl.split(",")[1];
-    addPhotoEditorCard(dataUrl);
-    speak("Photo loaded. Select a filter or ask me anything about it.");
-  };
-  reader.readAsDataURL(file);
-}
-
-function addPhotoEditorCard(dataUrl) {
-  let c = document.getElementById("chat");
-  let id = "canvas_" + Date.now();
-  let d = document.createElement("div");
-  d.className = "msg user";
-  d.innerHTML = `Photo Uploaded:<br><canvas id="${id}"></canvas>
-    <div class="edit-bar">
-      <button class="chip" onclick="applyFilter('${id}','none')">Original</button>
-      <button class="chip" onclick="applyFilter('${id}','contrast(1.3) saturate(1.35) brightness(1.05)')">✨ HD Boost</button>
-      <button class="chip" onclick="applyFilter('${id}','sepia(0.35) contrast(1.2) saturate(1.4)')">🎬 Cinematic</button>
-      <button class="chip" onclick="applyFilter('${id}','hue-rotate(190deg) saturate(1.8) contrast(1.2)')">🔮 Cyberpunk</button>
-      <button class="chip" onclick="applyFilter('${id}','grayscale(1) contrast(1.4)')">🖤 B&W</button>
-      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save</button>
-    </div>`;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-
-  let cvs = document.getElementById(id);
-  let ctx = cvs.getContext("2d");
-  let img = new Image();
-  img.onload = () => {
-    cvs.width = img.width;
-    cvs.height = img.height;
-    cvs._origImg = img;
-    ctx.drawImage(img, 0, 0);
-  };
-  img.src = dataUrl;
-}
-
-function applyFilter(id, flt) {
-  let cvs = document.getElementById(id);
-  if (!cvs || !cvs._origImg) return;
-  let ctx = cvs.getContext("2d");
-  ctx.filter = flt;
-  ctx.drawImage(cvs._origImg, 0, 0);
-}
-
-function downloadCanvas(id) {
-  let cvs = document.getElementById(id);
-  let a = document.createElement("a");
-  a.download = "Jarvis_Edited_" + Date.now() + ".jpg";
-  a.href = cvs.toDataURL("image/jpeg", 0.95);
-  a.click();
-}
 
 async function send() {
   let inp = document.getElementById("t");
-  let msg = inp.value.trim();
-  if (!msg) return;
-  if (!key) {
-    document.getElementById("keyBox").style.display = "flex";
-    addMsg("Please enter your Gemini API Key in the top box.", "bot");
+  let val = inp.value.trim();
+  if(!val) return;
+
+  if(!key) {
+    key = val;
+    localStorage.setItem("API_KEY", key);
+    inp.value = "";
+    addMsg("API Key Saved Successfully!", "bot");
     return;
   }
+
   inp.value = "";
-  addMsg(msg, "user");
-
-  if (/generate image|draw|image banao|photo banao/i.test(msg)) {
-    generateImage(msg);
-    return;
-  }
-
-  let userParts = [{text: msg}];
-  if (currentPhotoBase64) {
-    userParts.push({inlineData: {mimeType: currentPhotoMime, data: currentPhotoBase64}});
-    currentPhotoBase64 = null;
-  }
-  chat.push({role:"user", parts: userParts});
+  addMsg(val, "user");
+  chat.push({role:"user", parts:[{text:val}]});
 
   try {
     let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        contents: chat.slice(-6),
-        generationConfig: { maxOutputTokens: 100, temperature: 0.7 }
-      })
+      body: JSON.stringify({ contents: chat.slice(-6) })
     });
     let d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!ans) throw new Error("No response received.");
-    ans = ans.replace(/[*#_~`]/g, "").trim();
+    if(d.error) throw new Error(d.error.message);
+    let ans = d.candidates[0].content.parts[0].text.trim();
     addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
     speak(ans);
@@ -254,27 +68,10 @@ async function send() {
 }
 
 function speak(txt) {
-  isSpeaking = true;
-  if (rec) { try { rec.stop(); } catch(e){} }
-
-  let done = () => {
-    isSpeaking = false;
-    if (autoMic && rec) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
-    }
-  };
-
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
+  if(window.speechSynthesis) {
     let u = new SpeechSynthesisUtterance(txt);
     u.lang = "en-US";
-    u.rate = 1.05;
-    u.pitch = 1.1;
-    u.onend = done;
-    u.onerror = done;
     window.speechSynthesis.speak(u);
-  } else {
-    done();
   }
 }
 
