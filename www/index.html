@@ -2,391 +2,78 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="referrer" content="no-referrer">
-<title>Aaru</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aaru AI</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-  body { background: #0b0914; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  header { padding: 12px 14px; background: #161124; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2e2147; }
-  .title { font-size: 16px; font-weight: bold; color: #f472b6; display: flex; align-items: center; gap: 7px; }
-  .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #22c55e; }
-  .top-btns { display: flex; gap: 6px; }
-  .btn-sm { background: #241b35; color: #f1f5f9; border: 1px solid #3b2d54; padding: 6px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; }
-  .btn-sm.active { background: #db2777; color: #fff; border-color: #f472b6; }
-  #keyBox { display: none; padding: 10px; background: #241b35; gap: 8px; border-bottom: 1px solid #3b2d54; }
-  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.45; word-wrap: break-word; }
-  .user { background: #db2777; align-self: flex-end; border-bottom-right-radius: 3px; color: #fff; }
-  .bot { background: #1e162e; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #3b2d54; }
-  .typing { font-size: 12px; color: #f472b6; font-style: italic; opacity: 0.85; }
-  .msg img, .msg canvas { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
-  .edit-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .chip { background: #120d1d; color: #f472b6; border: 1px solid #f472b6; padding: 5px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; text-decoration: none; }
-  .bar { padding: 10px; background: #161124; display: flex; align-items: center; gap: 6px; border-top: 1px solid #2e2147; }
-  #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; outline: none; font-size: 14px; }
-  .icon-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: #241b35; color: #fff; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .icon-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
-  .send-btn { background: #f472b6; color: #000; font-weight: bold; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  body { background: #0b0914; color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 14px; background: #161124; text-align: center; color: #f472b6; font-weight: bold; font-size: 16px; }
+  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+  .user { background: #db2777; align-self: flex-end; }
+  .bot { background: #1e162e; align-self: flex-start; }
+  .bar { padding: 10px; background: #161124; display: flex; gap: 8px; }
+  input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; outline: none; }
+  button { background: #f472b6; border: none; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; color: #000; }
 </style>
 </head>
 <body>
-
-<header>
-  <div class="title"><span class="dot"></span> Aaru 💖</div>
-  <div class="top-btns">
-    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto-Mic: OFF</button>
-    <button class="btn-sm" onclick="promptImageGen()">🎨 Create</button>
-    <button class="btn-sm" onclick="toggleKey()">🔑 Key</button>
-  </div>
-</header>
-
-<div id="keyBox">
-  <input type="text" id="kInp" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #475569;background:#0b0914;color:#fff;" placeholder="Paste Gemini API Key (AIzaSy...)">
-  <button class="btn-sm active" onclick="saveKey()">Save</button>
-</div>
-
+<header>Aaru AI (Super Fast)</header>
 <div id="chat">
-  <div class="msg bot">Hii Aditya! Main Aaru hoon 💖 Main ab super fast bolungi aur hamesha tumhari cute dost bankar baat karungi!</div>
+  <div class="msg bot">Hii Aditya! Main Aaru hoon. Mujhe Aditya Soni ne banaya hai. Apni API Key dalo aur baat shuru karo.</div>
 </div>
-
-<input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-
 <div class="bar">
-  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()" title="Photo Edit">📷</button>
-  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Mic">🎤</button>
-  <input type="text" id="t" placeholder="Aaru se kuch bolo..." onkeypress="if(event.key==='Enter') send()">
-  <button class="icon-btn send-btn" onclick="send()">➤</button>
+  <input type="text" id="t" placeholder="Type message or API Key..." onkeypress="if(event.key==='Enter') send()">
+  <button onclick="send()">Send</button>
 </div>
-
 <script>
-let defaultKey = "";
-try { defaultKey = atob("").trim(); } catch(e) {}
-let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
-if (!key) document.getElementById("keyBox").style.display = "flex";
-
-let autoMic = false;
-let isSpeaking = false;
-let currentPhotoBase64 = null;
-let currentPhotoMime = "image/jpeg";
-let currentAudio = null;
-
-function toggleKey() {
-  let b = document.getElementById("keyBox");
-  b.style.display = b.style.display === "flex" ? "none" : "flex";
-  document.getElementById("kInp").value = key;
-}
-
-function saveKey() {
-  key = document.getElementById("kInp").value.trim();
-  localStorage.setItem("API_KEY", key);
-  document.getElementById("keyBox").style.display = "none";
-  addMsg("API Key save ho gayi Aditya! Chalo ab baat karte hain.", "bot");
-  speak("API Key save ho gayi Aditya! Chalo ab baat karte hain.");
-}
-
-const SYSTEM_PROMPT = "Tumhara naam Aaru hai. Tum Aditya ki bahut cute, sweet, caring aur smart female best friend ho. Hamesha ek ladki ki tarah 100% first-person female grammar mein baat karo (jaise: 'main kar rahi hoon', 'main bataungi', 'main samajh gayi', 'main thik hoon'). Kabhi bhi apne liye 'raha hoon', 'raha hu', 'karunga', ya third-person ('rahi hai', 'Aaru kar rahi hai') mat use karna. Jawab hamesha Hinglish mein sirf 1 chhote aur pyare sentence (maximum 12 se 15 words) mein super fast do. Koi star (*) ya emoji mat lagao.";
-
+let key = localStorage.getItem("API_KEY") || "";
 let chat = [
-  {role:"user", parts:[{text: SYSTEM_PROMPT}]},
-  {role:"model", parts:[{text:"Hii Aditya! Main Aaru hoon, batao aaj main tumhari kya madad karun?"}]}
+  {role:"user", parts:[{text:"You are Aaru, created by Aditya Soni. Be super fast and concise."}]},
+  {role:"model", parts:[{text:"Hii Aditya! Ready."}]}
 ];
-
-// Force 100% Female First-Person Grammar
-function enforceGirlGrammar(txt) {
-  return txt
-    .replace(/\braha hoon\b/gi, "rahi hoon")
-    .replace(/\braha hu\b/gi, "rahi hoon")
-    .replace(/\bkarunga\b/gi, "karungi")
-    .replace(/\bbataunga\b/gi, "bataungi")
-    .replace(/\bjaunga\b/gi, "jaungi")
-    .replace(/\baunga\b/gi, "aaungi")
-    .replace(/\baaunga\b/gi, "aaungi")
-    .replace(/\bsakta hoon\b/gi, "sakti hoon")
-    .replace(/\bsakta hu\b/gi, "sakti hoon")
-    .replace(/\bkarta hoon\b/gi, "karti hoon")
-    .replace(/\bkarta hu\b/gi, "karti hoon")
-    .replace(/\bsamajh gaya\b/gi, "samajh gayi")
-    .replace(/\bgaya hoon\b/gi, "gayi hoon")
-    .replace(/\bgaya tha\b/gi, "gayi thi")
-    .replace(/\baaya hoon\b/gi, "aayi hoon")
-    .replace(/\bsun raha\b/gi, "sun rahi")
-    .replace(/\bbol raha\b/gi, "bol rahi")
-    .replace(/\bdekh raha\b/gi, "dekh rahi")
-    .replace(/\bsoch raha\b/gi, "soch rahi");
-}
-
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null;
-if (SpeechRec) {
-  rec = new SpeechRec();
-  rec.lang = "hi-IN";
-  rec.interimResults = false;
-  rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
-  rec.onend = () => {
-    document.getElementById("micBtn").classList.remove("listening");
-    if (autoMic && !isSpeaking) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
-    }
-  };
-  rec.onerror = () => {
-    document.getElementById("micBtn").classList.remove("listening");
-    if (autoMic && !isSpeaking) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 800);
-    }
-  };
-  rec.onresult = (e) => {
-    let txt = e.results[0][0].transcript;
-    document.getElementById("t").value = txt;
-    send();
-  };
-}
-
-async function requestMicPermission() {
-  try {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-    }
-  } catch(e) {}
-}
-
-async function toggleAutoMic() {
-  await requestMicPermission();
-  autoMic = !autoMic;
-  let btn = document.getElementById("autoMicBtn");
-  btn.innerText = autoMic ? "🎙️ Auto-Mic: ON" : "🎙️ Auto-Mic: OFF";
-  btn.classList.toggle("active", autoMic);
-  if (autoMic && rec) {
-    try { rec.start(); } catch(e){}
-  } else if (rec) {
-    try { rec.stop(); } catch(e){}
-  }
-}
-
-async function startSingleMic() {
-  await requestMicPermission();
-  if (!rec) {
-    addMsg("Mic chalane ke liye App Settings mein Microphone permission on kar do.", "bot");
-    return;
-  }
-  try { rec.start(); } catch(e) { try { rec.stop(); } catch(err){} }
-}
-
-function promptImageGen() {
-  let p = document.getElementById("t").value.trim();
-  if (!p) {
-    document.getElementById("t").value = "photo banao ";
-    document.getElementById("t").focus();
-  } else {
-    generateImage(p);
-    document.getElementById("t").value = "";
-  }
-}
-
-function generateImage(promptText) {
-  let cleanPrompt = promptText.replace(/photo banao|image banao|pic banao|generate image|generate|draw/gi, "").trim() || "cute anime girl";
-  addMsg("🎨 Main abhi photo bana rahi hoon: " + cleanPrompt, "bot");
-  speak("Ruko Aditya, main abhi tumhare liye pyari si photo bana rahi hoon.");
-
-  let seed = Math.floor(Math.random() * 999999);
-  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", masterpiece, ultra detailed, 8k resolution") + "?width=768&height=768&seed=" + seed + "&nologo=true";
-
-  let c = document.getElementById("chat");
-  let d = document.createElement("div");
-  d.className = "msg bot";
-  d.innerHTML = `Yeh dekho Aditya, maine bana di:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip">⬇ Full HD Save</a></div>`;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-}
-
-function handleImageUpload(e) {
-  let file = e.target.files[0];
-  if (!file) return;
-  currentPhotoMime = file.type || "image/jpeg";
-  let reader = new FileReader();
-  reader.onload = function(evt) {
-    let dataUrl = evt.target.result;
-    currentPhotoBase64 = dataUrl.split(",")[1];
-    addPhotoEditorCard(dataUrl);
-    speak("Photo aa gayi Aditya! Niche filter لگا lo ya mujhse iske baare mein kuch bhi pooch lo.");
-  };
-  reader.readAsDataURL(file);
-}
-
-function addPhotoEditorCard(dataUrl) {
-  let c = document.getElementById("chat");
-  let id = "canvas_" + Date.now();
-  let d = document.createElement("div");
-  d.className = "msg user";
-  d.innerHTML = `Photo Studio:<br><canvas id="${id}"></canvas>
-    <div class="edit-bar">
-      <button class="chip" onclick="applyFilter('${id}','none')">Original</button>
-      <button class="chip" onclick="applyFilter('${id}','contrast(1.28) saturate(1.35) brightness(1.05)')">✨ HD Boost</button>
-      <button class="chip" onclick="applyFilter('${id}','sepia(0.35) contrast(1.2) saturate(1.4)')">🎬 Cinematic</button>
-      <button class="chip" onclick="applyFilter('${id}','hue-rotate(190deg) saturate(1.8) contrast(1.2)')">🔮 Cyberpunk</button>
-      <button class="chip" onclick="applyFilter('${id}','grayscale(1) contrast(1.4)')">🖤 B&W</button>
-      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save Photo</button>
-    </div>`;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-
-  let cvs = document.getElementById(id);
-  let ctx = cvs.getContext("2d");
-  let img = new Image();
-  img.onload = () => {
-    cvs.width = img.width;
-    cvs.height = img.height;
-    cvs._origImg = img;
-    ctx.drawImage(img, 0, 0);
-  };
-  img.src = dataUrl;
-}
-
-function applyFilter(id, flt) {
-  let cvs = document.getElementById(id);
-  if (!cvs || !cvs._origImg) return;
-  let ctx = cvs.getContext("2d");
-  ctx.filter = flt;
-  ctx.drawImage(cvs._origImg, 0, 0);
-}
-
-function downloadCanvas(id) {
-  let cvs = document.getElementById(id);
-  let a = document.createElement("a");
-  a.download = "Aaru_Edited_" + Date.now() + ".jpg";
-  a.href = cvs.toDataURL("image/jpeg", 0.95);
-  a.click();
-}
-
-// Ultra-Fast Response with Low Token Cap & Instant Fallback
-async function fetchFastReply(userMsg) {
-  let payload = {
-    contents: [chat[0], chat[1], ...chat.slice(-4)],
-    generationConfig: {
-      maxOutputTokens: 55,
-      temperature: 0.65
-    }
-  };
-
-  try {
-    let ctrl = new AbortController();
-    let timer = setTimeout(() => ctrl.abort(), 3500);
-    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload),
-      signal: ctrl.signal
-    });
-    clearTimeout(timer);
-    let d = await r.json();
-    let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (ans) return ans;
-  } catch(e) {}
-
-  // Instant Fallback if Gemini is slow or busy
-  let prompt = SYSTEM_PROMPT + " Aditya says: " + userMsg + " Aaru replies in 1 short sentence:";
-  let bRes = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt));
-  let bTxt = await bRes.text();
-  if (bTxt && bTxt.trim()) return bTxt.trim();
-
-  throw new Error("Network slow hai Aditya, dobara bolo.");
-}
 
 async function send() {
   let inp = document.getElementById("t");
-  let msg = inp.value.trim();
-  if (!msg) return;
+  let val = inp.value.trim();
+  if(!val) return;
 
-  if (msg.startsWith("AIzaSy") && msg.length > 30) {
-    key = msg;
+  if(!key) {
+    key = val;
     localStorage.setItem("API_KEY", key);
     inp.value = "";
-    document.getElementById("keyBox").style.display = "none";
-    addMsg("API Key save ho gayi Aditya! Chalo ab baat karte hain.", "bot");
-    speak("API Key save ho gayi Aditya!");
-    return;
-  }
-
-  if (!key) {
-    document.getElementById("keyBox").style.display = "flex";
-    addMsg("Upar Key box mein apni Gemini API Key daal kar Save daba do.", "bot");
+    addMsg("API Key Saved Successfully!", "bot");
     return;
   }
 
   inp.value = "";
-  addMsg(msg, "user");
-
-  if (/photo banao|image banao|pic banao|generate image|draw/i.test(msg)) {
-    generateImage(msg);
-    return;
-  }
-
-  let userParts = [{text: msg + " (Reply as Aaru in 1 short female sentence)"}];
-  if (currentPhotoBase64) {
-    userParts.push({inlineData: {mimeType: currentPhotoMime, data: currentPhotoBase64}});
-    currentPhotoBase64 = null;
-  }
-  chat.push({role:"user", parts: userParts});
-
-  let loader = addMsg("Aaru bol rahi hai...", "bot typing");
+  addMsg(val, "user");
+  chat.push({role:"user", parts:[{text:val}]});
 
   try {
-    let ans = await fetchFastReply(msg);
-    ans = ans.replace(/[*#_~`]/g, "").trim();
-    ans = enforceGirlGrammar(ans);
-    loader.className = "msg bot";
-    loader.innerText = ans;
+    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ contents: chat.slice(-6) })
+    });
+    let d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    let ans = d.candidates[0].content.parts[0].text.trim();
+    addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
     speak(ans);
   } catch(e) {
     chat.pop();
-    loader.className = "msg bot";
-    loader.innerText = "Error: " + e.message;
+    addMsg("Error: " + e.message, "bot");
   }
 }
 
-// Cute Girl Voice Output (Higher Pitch + Fast Delivery)
 function speak(txt) {
-  isSpeaking = true;
-  if (rec) { try { rec.stop(); } catch(e){} }
-  if (currentAudio) { try { currentAudio.pause(); } catch(e){} }
-
-  let doneSpeaking = () => {
-    isSpeaking = false;
-    if (autoMic && rec) {
-      setTimeout(() => { try { rec.start(); } catch(e){} }, 300);
-    }
-  };
-
-  let shortTxt = txt.substring(0, 180);
-  let ttsUrl = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(shortTxt);
-  let audio = new Audio(ttsUrl);
-  currentAudio = audio;
-
-  // Pitch shift for cute, sweet girly voice
-  audio.preservesPitch = false;
-  audio.mozPreservesPitch = false;
-  audio.webkitPreservesPitch = false;
-  audio.playbackRate = 1.18;
-
-  audio.onended = doneSpeaking;
-  audio.onerror = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      let u = new SpeechSynthesisUtterance(txt);
-      u.lang = "hi-IN";
-      u.pitch = 1.38; // Cute girl pitch
-      u.rate = 1.14;  // Fast speed
-      u.onend = doneSpeaking;
-      u.onerror = doneSpeaking;
-      window.speechSynthesis.speak(u);
-    } else {
-      doneSpeaking();
-    }
-  };
-  audio.play().catch(() => audio.onerror());
+  if(window.speechSynthesis) {
+    let u = new SpeechSynthesisUtterance(txt);
+    u.lang = "hi-IN";
+    u.pitch = 1.3;
+    window.speechSynthesis.speak(u);
+  }
 }
 
 function addMsg(txt, cls) {
@@ -396,7 +83,6 @@ function addMsg(txt, cls) {
   d.innerText = txt;
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
-  return d;
 }
 </script>
 </body>
