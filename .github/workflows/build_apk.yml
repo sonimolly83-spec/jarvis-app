@@ -1,4 +1,4 @@
-name: Build Jarvis 3.8 APK
+name: Build Aaru APK
 on: [push]
 jobs:
   build:
@@ -12,12 +12,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Build Fresh Android APK
+      - name: Build Fresh Aaru APK
         run: |
           rm -rf android capacitor.config.json package.json package-lock.json
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          echo '{"appId":"com.aditya.jarvis38","appName":"Jarvis 3.8","webDir":"www"}' > capacitor.config.json
+          echo '{"appId":"com.aditya.jarvis38","appName":"Aaru","webDir":"www"}' > capacitor.config.json
           npx cap add android
           sed -i 's|<application|<uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><application android:usesCleartextTraffic="true"|g' android/app/src/main/AndroidManifest.xml
           cd android
@@ -25,5 +25,5 @@ jobs:
           ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: jarvis-38-apk
+          name: aaru-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
