@@ -17,7 +17,7 @@
 </style>
 </head>
 <body>
-<header>Aaru AI (Super Fast)</header>
+<header>Aaru AI Pro</header>
 <div id="chat">
   <div class="msg bot">Hii Aditya! Main Aaru hoon. Mujhe Aditya Soni ne banaya hai. Apni API Key dalo aur baat shuru karo.</div>
 </div>
@@ -28,7 +28,7 @@
 <script>
 let key = localStorage.getItem("API_KEY") || "";
 let chat = [
-  {role:"user", parts:[{text:"You are Aaru, created by Aditya Soni. Be super fast and concise."}]},
+  {role:"user", parts:[{text:"You are Aaru, created by Aditya Soni. Be super fast, cute, and concise in Hinglish."}]},
   {role:"model", parts:[{text:"Hii Aditya! Ready."}]}
 ];
 
@@ -58,6 +58,7 @@ async function send() {
     let d = await r.json();
     if(d.error) throw new Error(d.error.message);
     let ans = d.candidates[0].content.parts[0].text.trim();
+    if(/kisne banaya|creator|malik/i.test(val)) ans = "Mujhe Aditya Soni ne banaya hai!";
     addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
     speak(ans);
