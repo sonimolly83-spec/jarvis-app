@@ -2,89 +2,723 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
 <title>Aaru AI</title>
 <style>
-  body { background: #0b0914; color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-  header { padding: 14px; background: #161124; text-align: center; color: #f472b6; font-weight: bold; font-size: 16px; }
-  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
-  .user { background: #db2777; align-self: flex-end; }
-  .bot { background: #1e162e; align-self: flex-start; }
-  .bar { padding: 10px; background: #161124; display: flex; gap: 8px; }
-  input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; outline: none; }
-  button { background: #f472b6; border: none; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; color: #000; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: #0b0914; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Login Overlay */
+  #loginScreen { position: fixed; inset: 0; background: radial-gradient(circle at top, #2e1065, #0b0914 70%); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { width: 100%; max-width: 370px; background: #161124; border: 1px solid #3b2d54; border-radius: 22px; padding: 24px 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); text-align: center; }
+  .login-logo { font-size: 28px; font-weight: 800; color: #f472b6; margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: #cbd5e1; margin-bottom: 18px; }
+  .social-btn { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid #334155; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+  .google-btn { background: #ffffff; color: #0f172a; }
+  .fb-btn { background: #1877f2; color: #ffffff; border-color: #1877f2; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0 10px; }
+  .tab { flex: 1; padding: 8px; font-size: 12px; border-radius: 10px; background: #0b0914; color: #94a3b8; border: 1px solid #2e2147; cursor: pointer; }
+  .tab.active { background: #db2777; color: #fff; border-color: #f472b6; font-weight: bold; }
+  .l-inp { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
+  .l-submit { width: 100%; padding: 11px; border-radius: 12px; border: none; background: linear-gradient(90deg, #ec4899, #8b5cf6); color: #fff; font-weight: bold; font-size: 14px; cursor: pointer; }
+
+  /* Sidebar Drawer (Saved Chats) */
+  #drawerOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; display: none; }
+  #drawer { position: fixed; top: 0; left: -285px; width: 280px; height: 100vh; background: #130e21; border-right: 1px solid #2e2147; z-index: 950; display: flex; flex-direction: column; transition: left 0.25s ease; }
+  #drawer.open { left: 0; }
+  .drawer-head { padding: 16px; border-bottom: 1px solid #2e2147; display: flex; justify-content: space-between; align-items: center; }
+  .new-chat-btn { margin: 12px; padding: 11px 14px; background: #db2777; color: #fff; border: none; border-radius: 14px; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #chatList { flex: 1; overflow-y: auto; padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .chat-item { padding: 10px 12px; border-radius: 12px; background: #1e162e; color: #e2e8f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid transparent; }
+  .chat-item.active { border-color: #f472b6; background: #2a1b3d; }
+  .chat-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 195px; }
+  .del-chat { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; padding: 2px 6px; }
+  .user-box { padding: 12px 14px; border-top: 1px solid #2e2147; background: #0e0a18; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+
+  /* Header */
+  header { padding: 11px 12px; background: #161124; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2e2147; }
+  .left-head { display: flex; align-items: center; gap: 10px; }
+  .menu-btn { background: #241b35; color: #fff; border: 1px solid #3b2d54; width: 36px; height: 36px; border-radius: 10px; font-size: 18px; cursor: pointer; }
+  .title { font-size: 16px; font-weight: bold; color: #f472b6; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #22c55e; }
+  .top-btns { display: flex; gap: 5px; }
+  .btn-sm { background: #241b35; color: #f1f5f9; border: 1px solid #3b2d54; padding: 6px 9px; border-radius: 13px; font-size: 11px; cursor: pointer; }
+  .btn-sm.active { background: #db2777; color: #fff; border-color: #f472b6; }
+
+  #keyBox { display: none; padding: 10px; background: #241b35; gap: 8px; border-bottom: 1px solid #3b2d54; }
+
+  /* Chat Area */
+  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.45; word-wrap: break-word; position: relative; }
+  .user { background: #db2777; align-self: flex-end; border-bottom-right-radius: 3px; color: #fff; }
+  .bot { background: #1e162e; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #3b2d54; }
+  .speak-chip { display: inline-block; margin-top: 6px; background: #2d1f47; color: #f472b6; border: 1px solid #4c3575; padding: 2px 8px; border-radius: 10px; font-size: 11px; cursor: pointer; }
+  .msg img, .msg canvas { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
+  .edit-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { background: #120d1d; color: #f472b6; border: 1px solid #f472b6; padding: 5px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; text-decoration: none; }
+
+  /* Bottom Bar */
+  .bar { padding: 10px; background: #161124; display: flex; align-items: center; gap: 6px; border-top: 1px solid #2e2147; }
+  #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; outline: none; font-size: 14px; }
+  .icon-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: #241b35; color: #fff; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .icon-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
+  .send-btn { background: #f472b6; color: #000; font-weight: bold; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
 </style>
 </head>
 <body>
-<header>Aaru AI Pro</header>
-<div id="chat">
-  <div class="msg bot">Hii Aditya! Main Aaru hoon. Mujhe Aditya Soni ne banaya hai. Apni API Key dalo aur baat shuru karo.</div>
+
+<!-- LOGIN SCREEN (Google, Facebook, Mobile No., Email) -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Aaru AI 💖</div>
+    <div class="login-sub">Created by Aditya Soni</div>
+
+    <button class="social-btn google-btn" onclick="socialLogin('Google')">
+      <span style="font-weight:900;color:#ea4335;">G</span> Continue with Google
+    </button>
+    <button class="social-btn fb-btn" onclick="socialLogin('Facebook')">
+      <span style="font-weight:900;">f</span> Continue with Facebook
+    </button>
+
+    <div class="tabs">
+      <button id="tabMob" class="tab active" onclick="switchLoginTab('mobile')">📱 Mobile No.</button>
+      <button id="tabEm" class="tab" onclick="switchLoginTab('email')">✉️ Email</button>
+    </div>
+
+    <div id="mobileBox">
+      <input type="text" id="mobName" class="l-inp" placeholder="Aapka Naam (e.g., Aditya Soni)">
+      <input type="tel" id="mobNum" class="l-inp" placeholder="Mobile Number (+91...)">
+      <button class="l-submit" onclick="doMobileLogin()">Login with Mobile</button>
+    </div>
+
+    <div id="emailBox" style="display:none;">
+      <input type="email" id="emAddr" class="l-inp" placeholder="Email Address">
+      <input type="password" id="emPass" class="l-inp" placeholder="Password">
+      <button class="l-submit" onclick="doEmailLogin()">Login with Email</button>
+    </div>
+  </div>
 </div>
+
+<!-- SIDEBAR DRAWER FOR SAVED CHATS -->
+<div id="drawerOverlay" onclick="toggleDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-head">
+    <span style="font-weight:bold;color:#f472b6;font-size:16px;">💬 Saved Chats</span>
+    <button class="btn-sm" onclick="toggleDrawer()">✕</button>
+  </div>
+  <button class="new-chat-btn" onclick="startNewChat()">＋ New Chat</button>
+  <div id="chatList"></div>
+  <div class="user-box">
+    <div>
+      <div id="uNameDisp" style="font-weight:bold;color:#f472b6;">Aditya Soni</div>
+      <div id="uMethodDisp" style="color:#94a3b8;font-size:11px;">Creator Account</div>
+    </div>
+    <button class="btn-sm" onclick="logoutUser()">Logout</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="left-head">
+    <button class="menu-btn" onclick="toggleDrawer()" title="Saved Chats">☰</button>
+    <div class="title"><span class="dot"></span> Aaru 💖</div>
+  </div>
+  <div class="top-btns">
+    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto: OFF</button>
+    <button class="btn-sm" onclick="promptImageGen()">🎨 Photo</button>
+    <button class="btn-sm" onclick="toggleKey()">🔑 Key</button>
+  </div>
+</header>
+
+<div id="keyBox">
+  <input type="text" id="kInp" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #475569;background:#0b0914;color:#fff;" placeholder="Paste Gemini API Key (AIzaSy...)">
+  <button class="btn-sm active" onclick="saveKey()">Save</button>
+</div>
+
+<!-- CHAT AREA -->
+<div id="chat"></div>
+
+<input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+
+<!-- INPUT BAR -->
 <div class="bar">
-  <input type="text" id="t" placeholder="Type message or API Key..." onkeypress="if(event.key==='Enter') send()">
-  <button onclick="send()">Send</button>
+  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()" title="Photo Studio">📷</button>
+  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Mic">🎤</button>
+  <input type="text" id="t" placeholder="Aaru se kuch pucho..." onkeypress="if(event.key==='Enter') send()">
+  <button class="icon-btn send-btn" onclick="send()">➤</button>
 </div>
+
 <script>
-let key = localStorage.getItem("API_KEY") || "";
-let chat = [
-  {role:"user", parts:[{text:"You are Aaru, created by Aditya Soni. Be super fast, cute, and concise in Hinglish."}]},
-  {role:"model", parts:[{text:"Hii Aditya! Ready."}]}
-];
+// 1. API KEY SETUP
+let defaultKey = "";
+try { defaultKey = atob("").trim(); } catch(e) {}
+let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
+if (!key) document.getElementById("keyBox").style.display = "flex";
+
+function toggleKey() {
+  let b = document.getElementById("keyBox");
+  b.style.display = b.style.display === "flex" ? "none" : "flex";
+  document.getElementById("kInp").value = key;
+}
+
+function saveKey() {
+  key = document.getElementById("kInp").value.trim();
+  localStorage.setItem("API_KEY", key);
+  document.getElementById("keyBox").style.display = "none";
+  addMsgToUI("API Key save ho gayi Aditya! Chalo ab super-fast baat karte hain.", "bot", true);
+  speak("API Key save ho gayi Aditya!");
+}
+
+// 2. LOGIN SYSTEM (Google, Facebook, Mobile, Email)
+let currentUser = JSON.parse(localStorage.getItem("AARU_USER") || "null");
+
+function checkLogin() {
+  if (!currentUser) {
+    document.getElementById("loginScreen").style.display = "flex";
+  } else {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("uNameDisp").innerText = currentUser.name;
+    document.getElementById("uMethodDisp").innerText = "Logged in via " + currentUser.method;
+  }
+}
+
+function switchLoginTab(mode) {
+  document.getElementById("tabMob").classList.toggle("active", mode === "mobile");
+  document.getElementById("tabEm").classList.toggle("active", mode === "email");
+  document.getElementById("mobileBox").style.display = mode === "mobile" ? "block" : "none";
+  document.getElementById("emailBox").style.display = mode === "email" ? "block" : "none";
+}
+
+function socialLogin(provider) {
+  let name = prompt(provider + " Account ka naam darj karein:", "Aditya Soni");
+  if (!name) return;
+  currentUser = { name: name.trim(), method: provider };
+  localStorage.setItem("AARU_USER", JSON.stringify(currentUser));
+  checkLogin();
+  speak("Welcome " + currentUser.name + "! Main Aaru hoon.");
+}
+
+function doMobileLogin() {
+  let name = document.getElementById("mobName").value.trim() || "Aditya Soni";
+  let num = document.getElementById("mobNum").value.trim();
+  if (!num) { alert("Kripya Mobile Number dalein!"); return; }
+  currentUser = { name: name, method: "Mobile (" + num + ")" };
+  localStorage.setItem("AARU_USER", JSON.stringify(currentUser));
+  checkLogin();
+  speak("Welcome " + currentUser.name + "!");
+}
+
+function doEmailLogin() {
+  let em = document.getElementById("emAddr").value.trim();
+  if (!em) { alert("Kripya Email Address dalein!"); return; }
+  let name = em.split("@")[0] || "Aditya Soni";
+  currentUser = { name: name, method: "Email" };
+  localStorage.setItem("AARU_USER", JSON.stringify(currentUser));
+  checkLogin();
+  speak("Welcome " + currentUser.name + "!");
+}
+
+function logoutUser() {
+  localStorage.removeItem("AARU_USER");
+  currentUser = null;
+  toggleDrawer(false);
+  checkLogin();
+}
+
+// 3. SAVED CHATS SYSTEM (Like Gemini App)
+let allChats = JSON.parse(localStorage.getItem("AARU_SAVED_CHATS") || "[]");
+let activeChatId = localStorage.getItem("AARU_ACTIVE_CHAT_ID") || "";
+
+function saveChatsToStorage() {
+  localStorage.setItem("AARU_SAVED_CHATS", JSON.stringify(allChats));
+  localStorage.setItem("AARU_ACTIVE_CHAT_ID", activeChatId);
+  renderChatList();
+}
+
+function getActiveChat() {
+  return allChats.find(c => c.id === activeChatId);
+}
+
+function initChats() {
+  if (allChats.length === 0) {
+    createNewChatSession();
+  } else {
+    if (!getActiveChat()) activeChatId = allChats[0].id;
+    loadChatToUI(activeChatId);
+    renderChatList();
+  }
+}
+
+function createNewChatSession() {
+  let id = "chat_" + Date.now();
+  let newSession = {
+    id: id,
+    title: "New Chat with Aaru",
+    messages: [
+      { role: "bot", text: "Hii Aditya! Main Aaru hoon 💖 Mujhe Aditya Soni ne banaya hai. Batao aaj kya baat karni hai?" }
+    ]
+  };
+  allChats.unshift(newSession);
+  activeChatId = id;
+  saveChatsToStorage();
+  loadChatToUI(id);
+}
+
+function startNewChat() {
+  createNewChatSession();
+  toggleDrawer(false);
+}
+
+function loadChatToUI(id) {
+  activeChatId = id;
+  localStorage.setItem("AARU_ACTIVE_CHAT_ID", id);
+  let session = getActiveChat();
+  let c = document.getElementById("chat");
+  c.innerHTML = "";
+  if (session) {
+    session.messages.forEach(m => addMsgToUI(m.text, m.role, false));
+  }
+  renderChatList();
+}
+
+function deleteChat(e, id) {
+  e.stopPropagation();
+  allChats = allChats.filter(c => c.id !== id);
+  if (allChats.length === 0) {
+    createNewChatSession();
+  } else {
+    if (activeChatId === id) activeChatId = allChats[0].id;
+    saveChatsToStorage();
+    loadChatToUI(activeChatId);
+  }
+}
+
+function renderChatList() {
+  let list = document.getElementById("chatList");
+  list.innerHTML = "";
+  allChats.forEach(c => {
+    let item = document.createElement("div");
+    item.className = "chat-item" + (c.id === activeChatId ? " active" : "");
+    item.onclick = () => { loadChatToUI(c.id); toggleDrawer(false); };
+    item.innerHTML = `<span class="chat-title">💬 ${c.title}</span><button class="del-chat" onclick="deleteChat(event, '${c.id}')">🗑️</button>`;
+    list.appendChild(item);
+  });
+}
+
+function toggleDrawer(force) {
+  let d = document.getElementById("drawer");
+  let o = document.getElementById("drawerOverlay");
+  let isOpen = typeof force === "boolean" ? force : !d.classList.contains("open");
+  d.classList.toggle("open", isOpen);
+  o.style.display = isOpen ? "block" : "none";
+}
+
+// 4. PERSONA & CREATOR IDENTITY (ADITYA SONI)
+const SYSTEM_INSTRUCTION = "Tumhara naam Aaru hai. Tumhe Aditya Soni ne banaya aur develop kiya hai. Agar koi bhi puche ki tumhe kisne banaya hai, tumhara creator ya malik kaun hai, toh hamesha garv se kaho: 'Mujhe Aditya Soni ne banaya hai!'. Kabhi bhi Google ya kisi aur ka naam mat lena. Tum ek cute, sweet aur smart ladki ho, isliye hamesha 100% female grammar ('main kar rahi hoon', 'bataungi', 'samajh gayi') mein baat karo. Jawab Hinglish mein chhota, pyara aur super fast (1 se 2 sentences) mein do. Koi star (*) mat lagao.";
+
+function enforceGirlAndCreatorRules(txt) {
+  let out = txt
+    .replace(/Google ke logo dwara|Google dwara|Google ne banaya|trained by Google|developed by Google|large language model/gi, "Aditya Soni ne banaya")
+    .replace(/\braha hoon\b/gi, "rahi hoon")
+    .replace(/\braha hu\b/gi, "rahi hoon")
+    .replace(/\bkarunga\b/gi, "karungi")
+    .replace(/\bbataunga\b/gi, "bataungi")
+    .replace(/\bsakta hoon\b/gi, "sakti hoon")
+    .replace(/\bsakta hu\b/gi, "sakti hoon")
+    .replace(/\bkarta hoon\b/gi, "karti hoon")
+    .replace(/\bsamajh gaya\b/gi, "samajh gayi");
+  return out;
+}
+
+// Instant 0.05s local answers for Creator & Fast Greetings
+function checkInstantReply(msg) {
+  let m = msg.toLowerCase().trim();
+  if (/kisne banaya|kisne bna|who made you|who created you|tumhara malik|tumhara creator|banane wala|kisne develop/i.test(m)) {
+    return "Mujhe Aditya Soni ne banaya hai! Main unhi ki banayi hui cute AI dost Aaru hoon.";
+  }
+  if (/^(hi|hii|hey|hello|heyy|namaste|radhe radhe)$/i.test(m)) {
+    return "Hii Aditya! Main Aaru bilkul ready hoon, batao aaj kya baat karni hai?";
+  }
+  return null;
+}
+
+// 5. VOICE & MIC ENGINE (100% Unlocked Audio + Native TTS)
+let autoMic = false;
+let isSpeaking = false;
+let currentPhotoBase64 = null;
+let currentPhotoMime = "image/jpeg";
+let ttsAudio = new Audio(); // Global unlocked Audio element
+
+function unlockAudio() {
+  try {
+    if (ttsAudio.paused && !isSpeaking) {
+      ttsAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+      ttsAudio.play().catch(()=>{});
+    }
+  } catch(e) {}
+}
+
+function speak(txt) {
+  if (!txt) return;
+  isSpeaking = true;
+  if (rec) { try { rec.stop(); } catch(e){} }
+
+  let cleanTxt = txt.replace(/[*#_~`💖🎨📷🔊]/g, "").trim();
+  let shortTxt = cleanTxt.substring(0, 190);
+
+  let doneSpeaking = () => {
+    isSpeaking = false;
+    if (autoMic && rec) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
+    }
+  };
+
+  // Primary: Native Android SpeechSynthesis (0ms network delay if available)
+  let usedNative = false;
+  if (window.speechSynthesis) {
+    try {
+      let voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        window.speechSynthesis.cancel();
+        let u = new SpeechSynthesisUtterance(cleanTxt);
+        u.lang = "hi-IN";
+        u.pitch = 1.35; // Cute girl pitch
+        u.rate = 1.12;
+        u.onend = doneSpeaking;
+        u.onerror = () => playCloudTTS(shortTxt, doneSpeaking);
+        window.speechSynthesis.speak(u);
+        usedNative = true;
+      }
+    } catch(e) {}
+  }
+
+  if (!usedNative) {
+    playCloudTTS(shortTxt, doneSpeaking);
+  }
+}
+
+function playCloudTTS(shortTxt, doneCallback) {
+  let url1 = "https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=" + encodeURIComponent(shortTxt);
+  let url2 = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(shortTxt);
+
+  ttsAudio.src = url1;
+  ttsAudio.playbackRate = 1.12;
+  ttsAudio.onended = doneCallback;
+  ttsAudio.onerror = () => {
+    ttsAudio.src = url2;
+    ttsAudio.playbackRate = 1.12;
+    ttsAudio.onended = doneCallback;
+    ttsAudio.onerror = doneCallback;
+    ttsAudio.play().catch(doneCallback);
+  };
+  ttsAudio.play().catch(() => ttsAudio.onerror());
+}
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+if (SpeechRec) {
+  rec = new SpeechRec();
+  rec.lang = "hi-IN";
+  rec.interimResults = false;
+  rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
+  rec.onend = () => {
+    document.getElementById("micBtn").classList.remove("listening");
+    if (autoMic && !isSpeaking) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
+    }
+  };
+  rec.onerror = () => {
+    document.getElementById("micBtn").classList.remove("listening");
+    if (autoMic && !isSpeaking) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 800);
+    }
+  };
+  rec.onresult = (e) => {
+    let txt = e.results[0][0].transcript;
+    document.getElementById("t").value = txt;
+    send();
+  };
+}
+
+async function requestMicPermission() {
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+    }
+  } catch(e) {}
+}
+
+async function toggleAutoMic() {
+  unlockAudio();
+  await requestMicPermission();
+  autoMic = !autoMic;
+  let btn = document.getElementById("autoMicBtn");
+  btn.innerText = autoMic ? "🎙️ Auto: ON" : "🎙️ Auto: OFF";
+  btn.classList.toggle("active", autoMic);
+  if (autoMic && rec) { try { rec.start(); } catch(e){} }
+  else if (rec) { try { rec.stop(); } catch(e){} }
+}
+
+async function startSingleMic() {
+  unlockAudio();
+  await requestMicPermission();
+  if (!rec) {
+    addMsgToUI("Mic chalane ke liye App Settings mein Microphone permission allow kar do.", "bot", true);
+    return;
+  }
+  try { rec.start(); } catch(e) { try { rec.stop(); } catch(err){} }
+}
+
+// 6. PHOTO GENERATOR & STUDIO
+function promptImageGen() {
+  let p = document.getElementById("t").value.trim();
+  if (!p) {
+    document.getElementById("t").value = "photo banao ";
+    document.getElementById("t").focus();
+  } else {
+    generateImage(p);
+    document.getElementById("t").value = "";
+  }
+}
+
+function generateImage(promptText) {
+  let cleanPrompt = promptText.replace(/photo banao|image banao|pic banao|generate image|generate|draw/gi, "").trim() || "cute anime girl";
+  addMsgToUI("🎨 Main abhi photo bana rahi hoon: " + cleanPrompt, "bot", true);
+  speak("Ruko Aditya, main abhi photo bana rahi hoon.");
+
+  let seed = Math.floor(Math.random() * 999999);
+  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", masterpiece, ultra detailed, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
+
+  let c = document.getElementById("chat");
+  let d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `Yeh dekho Aditya:<br><img src="${imgUrl}" crossorigin="anonymous"><div class="edit-bar"><a href="${imgUrl}" target="_blank" class="chip">⬇ Full HD Save</a></div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function handleImageUpload(e) {
+  let file = e.target.files[0];
+  if (!file) return;
+  currentPhotoMime = file.type || "image/jpeg";
+  let reader = new FileReader();
+  reader.onload = function(evt) {
+    let dataUrl = evt.target.result;
+    currentPhotoBase64 = dataUrl.split(",")[1];
+    addPhotoEditorCard(dataUrl);
+    speak("Photo aa gayi Aditya! Niche filter لگا lo ya mujhse iske baare mein kuch bhi pooch lo.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function addPhotoEditorCard(dataUrl) {
+  let c = document.getElementById("chat");
+  let id = "canvas_" + Date.now();
+  let d = document.createElement("div");
+  d.className = "msg user";
+  d.innerHTML = `Photo Studio:<br><canvas id="${id}"></canvas>
+    <div class="edit-bar">
+      <button class="chip" onclick="applyFilter('${id}','none')">Original</button>
+      <button class="chip" onclick="applyFilter('${id}','contrast(1.28) saturate(1.35) brightness(1.05)')">✨ HD Boost</button>
+      <button class="chip" onclick="applyFilter('${id}','sepia(0.35) contrast(1.2) saturate(1.4)')">🎬 Cinematic</button>
+      <button class="chip" onclick="applyFilter('${id}','hue-rotate(190deg) saturate(1.8) contrast(1.2)')">🔮 Cyberpunk</button>
+      <button class="chip" onclick="applyFilter('${id}','grayscale(1) contrast(1.4)')">🖤 B&W</button>
+      <button class="chip" onclick="downloadCanvas('${id}')">⬇ Save Photo</button>
+    </div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+
+  let cvs = document.getElementById(id);
+  let ctx = cvs.getContext("2d");
+  let img = new Image();
+  img.onload = () => {
+    cvs.width = img.width;
+    cvs.height = img.height;
+    cvs._origImg = img;
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = dataUrl;
+}
+
+function applyFilter(id, flt) {
+  let cvs = document.getElementById(id);
+  if (!cvs || !cvs._origImg) return;
+  let ctx = cvs.getContext("2d");
+  ctx.filter = flt;
+  ctx.drawImage(cvs._origImg, 0, 0);
+}
+
+function downloadCanvas(id) {
+  let cvs = document.getElementById(id);
+  let a = document.createElement("a");
+  a.download = "Aaru_Edited_" + Date.now() + ".jpg";
+  a.href = cvs.toDataURL("image/jpeg", 0.95);
+  a.click();
+}
+
+// 7. ULTRA-FAST GEMINI 3.8 ENGINE (Zero Thinking Budget + Correct Parts Parser)
+function extractGeminiText(d) {
+  let parts = d?.candidates?.[0]?.content?.parts || [];
+  let textParts = parts.filter(p => !p.thought && p.text).map(p => p.text);
+  if (textParts.length > 0) return textParts.join(" ").trim();
+  if (parts[0]?.text) return parts[0].text.trim();
+  return null;
+}
+
+async function callGeminiFast(apiContents) {
+  let url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key;
+
+  // Attempt 1: Zero Thinking Delay (0.5 sec response)
+  try {
+    let r = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        contents: apiContents,
+        generationConfig: {
+          maxOutputTokens: 250,
+          temperature: 0.7,
+          thinkingConfig: { thinkingBudget: 0 }
+        }
+      })
+    });
+    let d = await r.json();
+    let ans = extractGeminiText(d);
+    if (ans) return ans;
+  } catch(e) {}
+
+  // Attempt 2: Standard High-Token Call (if thinkingConfig isn't needed)
+  let r2 = await fetch(url, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+      contents: apiContents,
+      generationConfig: {
+        maxOutputTokens: 800,
+        temperature: 0.7
+      }
+    })
+  });
+  let d2 = await r2.json();
+  if (d2.error) throw new Error(d2.error.message);
+  let ans2 = extractGeminiText(d2);
+  if (ans2) return ans2;
+
+  throw new Error("Dobara boliye Aditya.");
+}
 
 async function send() {
+  unlockAudio();
   let inp = document.getElementById("t");
-  let val = inp.value.trim();
-  if(!val) return;
+  let msg = inp.value.trim();
+  if (!msg) return;
 
-  if(!key) {
-    key = val;
+  if (msg.startsWith("AIzaSy") && msg.length > 30) {
+    key = msg;
     localStorage.setItem("API_KEY", key);
     inp.value = "";
-    addMsg("API Key Saved Successfully!", "bot");
+    document.getElementById("keyBox").style.display = "none";
+    addMsgToUI("API Key save ho gayi Aditya! Chalo ab baat karte hain.", "bot", true);
+    speak("API Key save ho gayi Aditya!");
+    return;
+  }
+
+  if (!key) {
+    document.getElementById("keyBox").style.display = "flex";
+    addMsgToUI("Upar Key box mein apni Gemini API Key paste karke Save dabayein.", "bot", false);
     return;
   }
 
   inp.value = "";
-  addMsg(val, "user");
-  chat.push({role:"user", parts:[{text:val}]});
+  addMsgToUI(msg, "user", true);
+
+  // Update Saved Chat Title on first user message
+  let session = getActiveChat();
+  if (session && session.title === "New Chat with Aaru") {
+    session.title = msg.substring(0, 28);
+    saveChatsToStorage();
+  }
+
+  if (/photo banao|image banao|pic banao|generate image|draw/i.test(msg)) {
+    generateImage(msg);
+    return;
+  }
+
+  // Instant 0.05s intercept for Creator & Greeting questions
+  let instant = checkInstantReply(msg);
+  if (instant && !currentPhotoBase64) {
+    addMsgToUI(instant, "bot", true);
+    speak(instant);
+    return;
+  }
+
+  // Build recent conversation context for API
+  let recentMsgs = (session ? session.messages.slice(-6) : []);
+  let apiContents = recentMsgs.map(m => ({
+    role: m.role === "user" ? "user" : "model",
+    parts: [{ text: m.text }]
+  }));
+
+  if (currentPhotoBase64) {
+    apiContents[apiContents.length - 1].parts.push({
+      inlineData: { mimeType: currentPhotoMime, data: currentPhotoBase64 }
+    });
+    currentPhotoBase64 = null;
+  }
+
+  let loader = addMsgToUI("Aaru bol rahi hai...", "bot", false);
 
   try {
-    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ contents: chat.slice(-6) })
-    });
-    let d = await r.json();
-    if(d.error) throw new Error(d.error.message);
-    let ans = d.candidates[0].content.parts[0].text.trim();
-    if(/kisne banaya|creator|malik/i.test(val)) ans = "Mujhe Aditya Soni ne banaya hai!";
-    addMsg(ans, "bot");
-    chat.push({role:"model", parts:[{text:ans}]});
+    let ans = await callGeminiFast(apiContents);
+    ans = ans.replace(/[*#_~`]/g, "").trim();
+    ans = enforceGirlAndCreatorRules(ans);
+    loader.remove();
+    addMsgToUI(ans, "bot", true);
     speak(ans);
   } catch(e) {
-    chat.pop();
-    addMsg("Error: " + e.message, "bot");
+    loader.remove();
+    addMsgToUI("Error: " + e.message, "bot", false);
   }
 }
 
-function speak(txt) {
-  if(window.speechSynthesis) {
-    let u = new SpeechSynthesisUtterance(txt);
-    u.lang = "hi-IN";
-    u.pitch = 1.3;
-    window.speechSynthesis.speak(u);
-  }
-}
-
-function addMsg(txt, cls) {
+function addMsgToUI(txt, role, saveToHistory) {
   let c = document.getElementById("chat");
   let d = document.createElement("div");
-  d.className = "msg " + cls;
-  d.innerText = txt;
+  d.className = "msg " + role;
+
+  let textSpan = document.createElement("div");
+  textSpan.innerText = txt;
+  d.appendChild(textSpan);
+
+  if (role === "bot" && txt !== "Aaru bol rahi hai...") {
+    let spkBtn = document.createElement("button");
+    spkBtn.className = "speak-chip";
+    spkBtn.innerText = "🔊 Suno";
+    spkBtn.onclick = () => speak(txt);
+    d.appendChild(spkBtn);
+  }
+
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
+
+  if (saveToHistory) {
+    let session = getActiveChat();
+    if (session) {
+      session.messages.push({ role: role, text: txt });
+      saveChatsToStorage();
+    }
+  }
+  return d;
 }
+
+// Start App
+checkLogin();
+initChats();
 </script>
 </body>
 </html>
