@@ -47,14 +47,14 @@
 </div>
 
 <div id="chat">
-  <div class="msg bot">Hello Aditya! Jarvis 3.8 Flash bilkul ready hai. Aap bol kar, likh kar, ya photo upload karke baat kar sakte hain.</div>
+  <div class="msg bot">Hello Aditya! Jarvis 3.8 Pro (Zero-Fail Edition) ready hai. Ab server busy hone par bhi jawab turant aayega!</div>
 </div>
 
 <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
 
 <div class="bar">
-  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()" title="Photo Edit / Ask">📷</button>
-  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Mic">🎤</button>
+  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()">📷</button>
+  <button id="micBtn" class="icon-btn" onclick="startSingleMic()">🎤</button>
   <input type="text" id="t" placeholder="Boliye ya likhiye..." onkeypress="if(event.key==='Enter') send()">
   <button class="icon-btn send-btn" onclick="send()">➤</button>
 </div>
@@ -90,7 +90,6 @@ let chat = [
   {role:"model", parts:[{text:"Namaste Aditya! Main Jarvis hoon, bataiye aaj kya kaam karna hai?"}]}
 ];
 
-// Speech Recognition Setup (Continuous Hands-Free Support)
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 if (SpeechRec) {
@@ -148,7 +147,6 @@ async function startSingleMic() {
   try { rec.start(); } catch(e) { try { rec.stop(); } catch(err){} }
 }
 
-// AI Image Generation
 function promptImageGen() {
   let p = document.getElementById("t").value.trim();
   if (!p) {
@@ -176,7 +174,6 @@ function generateImage(promptText) {
   c.scrollTop = c.scrollHeight;
 }
 
-// Photo Upload, Filter Studio & Gemini Vision
 function handleImageUpload(e) {
   let file = e.target.files[0];
   if (!file) return;
@@ -236,12 +233,40 @@ function downloadCanvas(id) {
   a.click();
 }
 
+// Multi-Model + Backup Fallback so "High Demand" never blocks replies
+async function getAIResponse(userMsg) {
+  let modelsToTry = ["models/gemini-3.8-flash", "models/gemini-3.8-flash-lite", "models/gemini-3.8-pro"];
+  
+  for (let m of modelsToTry) {
+    try {
+      let r = await fetch("https://generativelanguage.googleapis.com/v1beta/" + m + ":generateContent?key=" + key, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          contents: chat.slice(-6),
+          generationConfig: { maxOutputTokens: 120, temperature: 0.7 }
+        })
+      });
+      let d = await r.json();
+      let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (ans) return ans;
+    } catch(e) {}
+  }
+
+  // Instant Backup Server if Google Gemini has a High Demand traffic spike
+  let sysPrompt = "You are Jarvis, Aditya's smart and polite personal AI assistant. Reply in natural Hinglish (1-2 short sentences, no emojis or asterisks). User says: " + userMsg;
+  let bRes = await fetch("https://text.pollinations.ai/" + encodeURIComponent(sysPrompt));
+  let bTxt = await bRes.text();
+  if (bTxt && bTxt.trim()) return bTxt.trim();
+
+  throw new Error("Internet connection check karein.");
+}
+
 async function send() {
   let inp = document.getElementById("t");
   let msg = inp.value.trim();
   if (!msg) return;
 
-  // Agar user ne seedha chat box mein AIzaSy... key daali ho toh auto-save karein
   if (msg.startsWith("AIzaSy") && msg.length > 30) {
     key = msg;
     localStorage.setItem("API_KEY", key);
@@ -274,18 +299,7 @@ async function send() {
   chat.push({role:"user", parts: userParts});
 
   try {
-    let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + key, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        contents: chat.slice(-6),
-        generationConfig: { maxOutputTokens: 120, temperature: 0.7 }
-      })
-    });
-    let d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    let ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!ans) throw new Error("Koi jawab nahi aaya, dobara koshish karein.");
+    let ans = await getAIResponse(msg);
     ans = ans.replace(/[*#_~`]/g, "").trim();
     addMsg(ans, "bot");
     chat.push({role:"model", parts:[{text:ans}]});
@@ -296,7 +310,6 @@ async function send() {
   }
 }
 
-// 100% Working Clear Voice Output (No-Referrer Google TTS + Native Fallback)
 function speak(txt) {
   isSpeaking = true;
   if (rec) { try { rec.stop(); } catch(e){} }
