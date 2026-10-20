@@ -1,4 +1,4 @@
-name: Build APK Pro
+name: Build Jarvis 3.8 APK
 on: [push]
 jobs:
   build:
@@ -12,17 +12,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Build APK Pro
+      - name: Build Fresh Android APK
         run: |
+          rm -rf android capacitor.config.json package.json package-lock.json
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          echo '{"appId":"com.aadi.jarvispro","appName":"Jarvis Pro","webDir":"www"}' > capacitor.config.json
+          echo '{"appId":"com.aditya.jarvis38","appName":"Jarvis 3.8","webDir":"www"}' > capacitor.config.json
           npx cap add android
-          sed -i 's|<application|<uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><application|g' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><application android:usesCleartextTraffic="true"|g' android/app/src/main/AndroidManifest.xml
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: jarvis-pro-apk
+          name: jarvis-38-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
