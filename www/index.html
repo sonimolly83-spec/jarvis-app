@@ -4,52 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>Aaru Ultra AI</title>
+<title>Aaru AI Studio</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: #0b0914; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  #otpBanner { position: fixed; top: -120px; left: 12px; right: 12px; background: #1e293b; border: 2px solid #22c55e; border-radius: 16px; padding: 14px; z-index: 10005; box-shadow: 0 12px 30px rgba(0,0,0,0.8); transition: top 0.35s ease; display: flex; justify-content: space-between; align-items: center; }
-  #otpBanner.show { top: 14px; }
-  .otp-code { font-size: 20px; font-weight: 900; color: #4ade80; letter-spacing: 3px; }
-  #loginScreen { position: fixed; inset: 0; background: radial-gradient(circle at top, #2e1065, #0b0914 75%); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 18px; }
-  .login-card { width: 100%; max-width: 370px; background: #161124; border: 1px solid #3b2d54; border-radius: 22px; padding: 22px 18px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.7); }
-  .login-logo { font-size: 26px; font-weight: 800; color: #f472b6; margin-bottom: 4px; }
-  .login-sub { font-size: 12px; color: #cbd5e1; margin-bottom: 14px; }
-  .social-btn { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #334155; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
-  .google-btn { background: #ffffff; color: #0f172a; }
-  .fb-btn { background: #1877f2; color: #ffffff; border-color: #1877f2; }
-  .l-inp { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; font-size: 14px; margin-bottom: 8px; outline: none; }
-  .l-submit { width: 100%; padding: 11px; border-radius: 12px; border: none; background: linear-gradient(90deg, #ec4899, #8b5cf6); color: #fff; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 4px; }
-  #drawerOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; display: none; }
+
+  /* Drawer */
+  #drawerOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 900; display: none; }
   #drawer { position: fixed; top: 0; left: -290px; width: 280px; height: 100vh; background: #130e21; border-right: 1px solid #2e2147; z-index: 950; display: flex; flex-direction: column; transition: left 0.25s ease; }
   #drawer.open { left: 0; }
   .drawer-head { padding: 14px; border-bottom: 1px solid #2e2147; display: flex; justify-content: space-between; align-items: center; }
   .new-chat-btn { margin: 10px; padding: 10px 14px; background: #db2777; color: #fff; border: none; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; }
   #chatList { flex: 1; overflow-y: auto; padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; }
-  .chat-item { padding: 10px; border-radius: 10px; background: #1e162e; color: #e2e8f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid transparent; }
-  .chat-item.active { border-color: #f472b6; background: #2a1b3d; }
-  .chat-title { flex: 1; word-break: break-word; padding-right: 6px; }
-  .del-chat { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; }
-  .user-box { padding: 12px; border-top: 1px solid #2e2147; background: #0e0a18; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+  .chat-item { padding: 10px; border-radius: 10px; background: #1e162e; color: #e2e8f0; font-size: 13px; cursor: pointer; }
+  .chat-item.active { border: 1px solid #f472b6; background: #2a1b3d; }
+
+  /* Header & Status Bar */
   header { padding: 10px 12px; background: #161124; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2e2147; }
   .left-head { display: flex; align-items: center; gap: 8px; }
   .menu-btn { background: #241b35; color: #fff; border: 1px solid #3b2d54; width: 34px; height: 34px; border-radius: 9px; font-size: 17px; cursor: pointer; }
   .title { font-size: 15px; font-weight: bold; color: #f472b6; display: flex; align-items: center; gap: 5px; }
   .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #22c55e; }
-  .top-btns { display: flex; gap: 4px; flex-wrap: wrap; }
-  .btn-sm { background: #241b35; color: #f1f5f9; border: 1px solid #3b2d54; padding: 5px 8px; border-radius: 11px; font-size: 11px; cursor: pointer; }
+  .top-btns { display: flex; gap: 5px; }
+  .btn-sm { background: #241b35; color: #f1f5f9; border: 1px solid #3b2d54; padding: 6px 9px; border-radius: 11px; font-size: 11px; cursor: pointer; }
   .btn-sm.active { background: #db2777; color: #fff; border-color: #f472b6; }
-  .status-bar { background: #120d1e; padding: 6px 12px; font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #241b35; gap: 6px; overflow-x: auto; white-space: nowrap; }
-  .badge { background: #1e162e; border: 1px solid #3b2d54; padding: 3px 8px; border-radius: 8px; color: #f472b6; font-weight: 600; cursor: pointer; }
-  #keyBox, #shortcutModal, #scheduleModal { display: none; padding: 10px; background: #241b35; gap: 8px; border-bottom: 1px solid #3b2d54; flex-wrap: wrap; align-items: center; }
-  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 92%; padding: 11px 14px; border-radius: 16px; font-size: 15px; line-height: 1.5; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
+  .btn-studio { background: linear-gradient(90deg, #0284c7, #7c3aed); color: #fff; border: none; font-weight: bold; }
+
+  .status-bar { background: #120d1e; padding: 6px 10px; font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #241b35; gap: 6px; overflow-x: auto; white-space: nowrap; }
+  .badge { background: #1e162e; border: 1px solid #3b2d54; padding: 4px 8px; border-radius: 8px; color: #f472b6; font-weight: 600; cursor: pointer; }
+
+  #keyBox, #scheduleModal { display: none; padding: 10px; background: #241b35; gap: 8px; border-bottom: 1px solid #3b2d54; align-items: center; flex-wrap: wrap; }
+
+  /* Kotlin & Flutter Idea-to-App Studio Modal */
+  #studioModal { position: fixed; inset: 0; background: #0b0914; z-index: 2000; display: none; flex-direction: column; }
+  .studio-head { padding: 12px 14px; background: #161124; border-bottom: 1px solid #2e2147; display: flex; justify-content: space-between; align-items: center; }
+  .studio-bar { padding: 10px; background: #120d1e; display: flex; gap: 6px; border-bottom: 1px solid #241b35; }
+  .studio-inp { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; font-size: 13px; outline: none; }
+  .studio-tabs { display: flex; background: #161124; border-bottom: 1px solid #2e2147; }
+  .s-tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: bold; color: #94a3b8; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+  .s-tab.active { color: #38bdf8; border-bottom-color: #38bdf8; background: #1e162e; }
+  .studio-body { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  #liveAppFrame { width: 100%; height: 100%; border: none; background: #fff; }
+  .code-view { display: none; width: 100%; height: 100%; overflow: auto; padding: 12px; background: #090710; color: #38bdf8; font-family: monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.45; }
+  .studio-foot { padding: 8px 12px; background: #161124; border-top: 1px solid #2e2147; display: flex; justify-content: space-between; gap: 8px; }
+
+  /* Chat Area */
+  #chat { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 92%; padding: 10px 14px; border-radius: 15px; font-size: 15px; line-height: 1.45; word-wrap: break-word; white-space: pre-wrap; }
   .user { background: #db2777; align-self: flex-end; border-bottom-right-radius: 3px; color: #fff; }
   .bot { background: #1e162e; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #3b2d54; }
-  .recap-box { margin-top: 10px; padding: 8px 10px; background: #130d21; border-left: 3px solid #38bdf8; border-radius: 6px; font-size: 12.5px; color: #bae6fd; }
-  .msg-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .speak-chip { background: #2d1f47; color: #f472b6; border: 1px solid #4c3575; padding: 3px 9px; border-radius: 10px; font-size: 11px; cursor: pointer; text-decoration: none; }
-  .msg img { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
   .bar { padding: 9px; background: #161124; display: flex; align-items: center; gap: 6px; border-top: 1px solid #2e2147; }
   #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #3b2d54; background: #0b0914; color: #fff; outline: none; font-size: 14px; }
   .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #241b35; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -60,48 +63,39 @@
 </head>
 <body>
 
-<div id="otpBanner">
-  <div>
-    <div style="font-size:11px;color:#94a3b8;">📩 Google / Aaru Instant Auth OTP</div>
-    <div id="otpBannerText" class="otp-code">------</div>
-  </div>
-  <button class="btn-sm active" onclick="autoFillOTP()">Auto-Fill & Verify</button>
-</div>
-
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">Aaru AI 💖</div>
-    <div class="login-sub">Created by Aditya Soni</div>
-    <button class="social-btn google-btn" onclick="prepareAccountLogin('Google')">
-      <span style="font-weight:900;color:#ea4335;">G</span> Continue with Google Account
-    </button>
-    <button class="social-btn fb-btn" onclick="prepareAccountLogin('Facebook')">
-      <span style="font-weight:900;">f</span> Continue with Facebook
-    </button>
-    <input type="text" id="loginName" class="l-inp" placeholder="Aapka Naam (Aditya Soni)" value="Aditya Soni">
-    <input type="text" id="loginId" class="l-inp" placeholder="Gmail ID, Email ya Mobile Number">
-    <div id="otpSection" style="display:none; margin-top:6px;">
-      <input type="number" id="otpInput" class="l-inp" placeholder="Enter 6-Digit OTP">
-      <button class="l-submit" onclick="verifyOTPAndLogin()">✅ Verify OTP & Login</button>
-    </div>
-    <button id="sendOtpBtn" class="l-submit" onclick="sendInstantOTP('Direct')">📩 Send Instant OTP</button>
-  </div>
-</div>
-
 <div id="drawerOverlay" onclick="toggleDrawer()"></div>
 <div id="drawer">
   <div class="drawer-head">
-    <span style="font-weight:bold;color:#f472b6;font-size:15px;">💬 Saved Chats</span>
+    <span style="font-weight:bold;color:#f472b6;">💬 Saved Chats</span>
     <button class="btn-sm" onclick="toggleDrawer()">✕</button>
   </div>
   <button class="new-chat-btn" onclick="startNewChat()">＋ New Chat</button>
   <div id="chatList"></div>
-  <div class="user-box">
-    <div>
-      <div id="uNameDisp" style="font-weight:bold;color:#f472b6;">Aditya Soni</div>
-      <div id="uMethodDisp" style="color:#94a3b8;font-size:11px;">Verified Creator</div>
-    </div>
-    <button class="btn-sm" onclick="logoutUser()">Logout</button>
+</div>
+
+<!-- KOTLIN & DART (FLUTTER) IDEA-TO-APP STUDIO -->
+<div id="studioModal">
+  <div class="studio-head">
+    <span style="font-weight:bold;color:#38bdf8;font-size:15px;">🚀 Kotlin & Flutter App Builder</span>
+    <button class="btn-sm" onclick="closeStudio()">✕ Close</button>
+  </div>
+  <div class="studio-bar">
+    <input type="text" id="appIdeaInp" class="studio-inp" placeholder="Apna App Idea likho (e.g. Gold GST Calculator, Game, Todo)...">
+    <button class="btn-sm btn-studio" onclick="buildAppFromIdea()">⚡ Build App</button>
+  </div>
+  <div class="studio-tabs">
+    <button id="tabPreview" class="s-tab active" onclick="switchStudioTab('preview')">▶️ Live App</button>
+    <button id="tabFlutter" class="s-tab" onclick="switchStudioTab('flutter')">🎯 Dart (Flutter)</button>
+    <button id="tabKotlin" class="s-tab" onclick="switchStudioTab('kotlin')">🤖 Kotlin (Android)</button>
+  </div>
+  <div class="studio-body">
+    <iframe id="liveAppFrame" sandbox="allow-scripts allow-forms allow-modals"></iframe>
+    <pre id="flutterCodeView" class="code-view"></pre>
+    <pre id="kotlinCodeView" class="code-view"></pre>
+  </div>
+  <div class="studio-foot">
+    <button class="btn-sm" onclick="copyStudioCode()">📋 Copy Code</button>
+    <button class="btn-sm active" onclick="downloadGeneratedApp()">📥 Download Installable App</button>
   </div>
 </div>
 
@@ -111,48 +105,38 @@
     <div class="title"><span class="dot"></span> Aaru 💖</div>
   </div>
   <div class="top-btns">
-    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoMic()">🎙️ Auto</button>
-    <button class="btn-sm" onclick="summarizeChat()">📝 Sum</button>
-    <button class="btn-sm" onclick="stopSpeaking()">⏹️ Chup</button>
+    <button class="btn-sm btn-studio" onclick="openStudio('')">📱 Make App</button>
+    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoChat()">🎙️ Auto-Chat: OFF</button>
     <button class="btn-sm" onclick="toggleKey()">🔑 Key</button>
   </div>
 </header>
 
 <div class="status-bar">
-  <span id="moodBadge" class="badge">🎭 Mood: Casual 😊</span>
-  <span class="badge" onclick="toggleShortcutModal()">⚡ /ab Shortcuts</span>
-  <span class="badge" onclick="toggleScheduleModal()">📅 Reminders (<span id="remCount">0</span>)</span>
-  <span class="badge" onclick="promptImageGen()">🎨 Photo</span>
+  <span id="stepBadge" class="badge" onclick="enableStepTracker()">👣 Steps: 0</span>
+  <span class="badge" onclick="toggleScheduleModal()">⏰ Reminders (<span id="remCount">0</span>)</span>
+  <span class="badge" onclick="requestAllPermissions()">🔔 Perms</span>
+  <span class="badge" onclick="summarizeChat()">📝 Summarize</span>
 </div>
 
 <div id="keyBox">
-  <input type="text" id="kInp" style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid #475569;background:#0b0914;color:#fff;" placeholder="Paste Gemini Key (AIzaSy...)">
+  <input type="text" id="kInp" style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid #475569;background:#0b0914;color:#fff;" placeholder="Gemini Key (AIzaSy...)">
   <button class="btn-sm active" onclick="saveKey()">Save</button>
 </div>
 
-<div id="shortcutModal">
-  <div style="width:100%;font-size:12px;color:#f472b6;font-weight:bold;">⚡ Quick Shortcuts (Type /ab or /code in chat):</div>
-  <input type="text" id="scTrigger" style="width:75px;padding:6px;border-radius:6px;background:#0b0914;color:#fff;border:1px solid #475569;" value="/ab">
-  <input type="text" id="scText" style="flex:1;padding:6px;border-radius:6px;background:#0b0914;color:#fff;border:1px solid #475569;" placeholder="Full phrase...">
-  <button class="btn-sm active" onclick="saveCustomShortcut()">Save</button>
-</div>
-
 <div id="scheduleModal">
-  <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
-    <span style="font-size:12px;color:#4ade80;font-weight:bold;">📅 Smart Scheduled Tasks:</span>
+  <div style="width:100%;display:flex;justify-content:space-between;">
+    <span style="font-size:12px;color:#4ade80;font-weight:bold;">⏰ Active Reminders (e.g. remind 5:30 PM workout):</span>
     <button class="btn-sm" onclick="toggleScheduleModal()">Close</button>
   </div>
-  <div id="schedList" style="width:100%;font-size:12px;color:#e2e8f0;margin-top:4px;"></div>
+  <div id="schedList" style="width:100%;font-size:12px;margin-top:4px;"></div>
 </div>
 
 <div id="chat"></div>
-<input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
 
 <div class="bar">
-  <button class="icon-btn" onclick="document.getElementById('imgUpload').click()">📷</button>
-  <button id="micBtn" class="icon-btn" onclick="startSingleMic()">🎤</button>
-  <input type="text" id="t" placeholder="Bolo, likho ya /ab type karo..." oninput="handleTypingInput(event)" onkeypress="if(event.key==='Enter') send()">
-  <button class="icon-btn send-btn" onclick="send()">➤</button>
+  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Voice Input">🎤</button>
+  <input type="text" id="t" placeholder="Aadi, yahan likho ya 'make app' bolo..." onkeypress="if(event.key==='Enter') send(false)">
+  <button class="icon-btn send-btn" onclick="send(false)">➤</button>
 </div>
 
 <script>
@@ -169,149 +153,76 @@ function saveKey() {
   key = document.getElementById("kInp").value.trim();
   localStorage.setItem("API_KEY", key);
   document.getElementById("keyBox").style.display = "none";
-  addMsgToUI("API Key save ho gayi Aditya! Ab 14,400 daily messages wale models bhi active hain.", "bot", true, "");
+  addMsgToUI("Key save ho gayi Aadi!", "bot", true);
 }
 
-// OTP & LOGIN
-let currentUser = JSON.parse(localStorage.getItem("AARU_USER") || "null");
-let generatedOTP = "";
-let pendingLoginMethod = "Google";
+// 1. DAILY STEP TRACKER
+let stepDay = new Date().toDateString();
+if (localStorage.getItem("STEP_DAY") !== stepDay) {
+  localStorage.setItem("STEP_DAY", stepDay);
+  localStorage.setItem("AARU_STEPS", "0");
+}
+let steps = parseInt(localStorage.getItem("AARU_STEPS") || "0", 10);
+let lastStepTime = 0;
 
-function checkLogin() {
-  if (!currentUser) {
-    document.getElementById("loginScreen").style.display = "flex";
+function updateStepUI() {
+  document.getElementById("stepBadge").innerText = "👣 Steps: " + steps;
+}
+updateStepUI();
+
+function enableStepTracker() {
+  if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+    DeviceMotionEvent.requestPermission().then(res => {
+      if (res === "granted") startMotionListener();
+    }).catch(()=>{});
   } else {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("uNameDisp").innerText = currentUser.name;
-    document.getElementById("uMethodDisp").innerText = currentUser.method;
+    startMotionListener();
   }
+  addMsgToUI("👣 Step Tracker active hai Aadi!", "bot", false);
 }
 
-function prepareAccountLogin(provider) {
-  pendingLoginMethod = provider;
-  let idBox = document.getElementById("loginId");
-  if (!idBox.value.trim()) idBox.value = "adityasoni@gmail.com";
-  sendInstantOTP(provider);
+function startMotionListener() {
+  window.addEventListener("devicemotion", (e) => {
+    let acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    let mag = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
+    let now = Date.now();
+    if (mag > 13.2 && (now - lastStepTime) > 380) {
+      steps++;
+      lastStepTime = now;
+      localStorage.setItem("AARU_STEPS", String(steps));
+      updateStepUI();
+    }
+  });
 }
+startMotionListener();
 
-function sendInstantOTP(provider) {
-  pendingLoginMethod = provider || pendingLoginMethod;
-  let idVal = document.getElementById("loginId").value.trim() || "adityasoni@gmail.com";
-  document.getElementById("loginId").value = idVal;
-  generatedOTP = String(Math.floor(100000 + Math.random() * 900000));
-  document.getElementById("otpSection").style.display = "block";
-  document.getElementById("sendOtpBtn").innerText = "🔄 Resend OTP";
-  let banner = document.getElementById("otpBanner");
-  document.getElementById("otpBannerText").innerText = generatedOTP;
-  banner.classList.add("show");
-  speak("Aditya, aapka login OTP hai " + generatedOTP.split("").join(" "));
-}
-
-function autoFillOTP() {
-  document.getElementById("otpInput").value = generatedOTP;
-  document.getElementById("otpBanner").classList.remove("show");
-  verifyOTPAndLogin();
-}
-
-function verifyOTPAndLogin() {
-  let name = document.getElementById("loginName").value.trim() || "Aditya Soni";
-  let idVal = document.getElementById("loginId").value.trim() || "Verified";
-  currentUser = { name: name, method: pendingLoginMethod + " (" + idVal + ")" };
-  localStorage.setItem("AARU_USER", JSON.stringify(currentUser));
-  document.getElementById("otpBanner").classList.remove("show");
-  checkLogin();
-  speak("Welcome " + name + "!");
-}
-
-function logoutUser() {
-  localStorage.removeItem("AARU_USER");
-  currentUser = null;
-  toggleDrawer(false);
-  checkLogin();
-}
-
-// QUICK SHORTCUTS (/ab)
-let shortcuts = JSON.parse(localStorage.getItem("AARU_SHORTCUTS") || '{"/ab":"Mujhe is topic ke baare mein poora detail mein step by step batao.","/code":"Iska poora working code bina kisi error ke likh kar do.","/sum":"Abhi tak ki hamari baatcheet ka short summary points mein batao."}');
-
-function toggleShortcutModal() {
-  let m = document.getElementById("shortcutModal");
-  m.style.display = m.style.display === "flex" ? "none" : "flex";
-  let trig = document.getElementById("scTrigger").value.trim();
-  document.getElementById("scText").value = shortcuts[trig] || "";
-}
-
-function saveCustomShortcut() {
-  let trig = document.getElementById("scTrigger").value.trim();
-  if (!trig.startsWith("/")) trig = "/" + trig;
-  let txt = document.getElementById("scText").value.trim();
-  if (txt) {
-    shortcuts[trig] = txt;
-    localStorage.setItem("AARU_SHORTCUTS", JSON.stringify(shortcuts));
-    document.getElementById("shortcutModal").style.display = "none";
-    addMsgToUI("⚡ Shortcut " + trig + " save ho gaya: " + txt, "bot", false, "");
-  }
-}
-
-// MOOD DETECTOR
-let lastKeyTime = 0;
-let typingSpeeds = [];
-let detectedMood = "Casual and Friendly";
-
-function handleTypingInput(e) {
-  let inp = document.getElementById("t");
-  let val = inp.value;
-  let trimmed = val.trim();
-  if (shortcuts[trimmed]) {
-    inp.value = shortcuts[trimmed] + " ";
-    return;
-  }
-  let now = Date.now();
-  if (lastKeyTime > 0 && (now - lastKeyTime) < 1500) {
-    typingSpeeds.push(now - lastKeyTime);
-    if (typingSpeeds.length > 8) typingSpeeds.shift();
-  }
-  lastKeyTime = now;
-  let avg = typingSpeeds.length ? typingSpeeds.reduce((a,b)=>a+b,0)/typingSpeeds.length : 250;
-  let lower = val.toLowerCase();
-  let badge = document.getElementById("moodBadge");
-  if (/please|sir|kindly|explain|formal|application|letter|report/i.test(lower)) {
-    detectedMood = "Formal and Professional";
-    badge.innerText = "🎭 Mood: Formal 👔";
-  } else if (/sad|thak|pareshan|dikkat|boring|udaas/i.test(lower)) {
-    detectedMood = "Extra Caring and Sweet";
-    badge.innerText = "🎭 Mood: Caring 💖";
-  } else if (avg < 110) {
-    detectedMood = "Energetic and Fast";
-    badge.innerText = "🎭 Mood: Energetic ⚡";
-  } else {
-    detectedMood = "Casual and Cute Bestie";
-    badge.innerText = "🎭 Mood: Casual 😊";
-  }
-}
-
-// SMART SCHEDULING
+// 2. REMINDERS & PERMISSIONS
 let schedules = JSON.parse(localStorage.getItem("AARU_SCHEDULES") || "[]");
+
+async function requestAllPermissions() {
+  try { if ("Notification" in window) await Notification.requestPermission(); } catch(e){}
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      let s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach(t => t.stop());
+    }
+  } catch(e){}
+  enableStepTracker();
+  addMsgToUI("✅ Mic, Notification aur Step Tracker permissions active ho gayi hain Aadi!", "bot", false);
+}
 
 function updateScheduleCount() {
   document.getElementById("remCount").innerText = schedules.length;
   let list = document.getElementById("schedList");
-  if (schedules.length === 0) {
-    list.innerHTML = "Koi reminder set nahi hai. Chat mein likhein: meet 3 PM tomorrow";
-  } else {
-    list.innerHTML = schedules.map((s, idx) =>
-      "<div style='padding:4px 0;border-bottom:1px solid #3b2d54;display:flex;justify-content:space-between;'>" +
-      "<span>⏰ " + s.task + " (" + s.time + ")</span>" +
-      "<button class='btn-sm' onclick='removeSchedule(" + idx + ")'>✕</button></div>"
-    ).join("");
-  }
+  list.innerHTML = schedules.length === 0 ? "Koi reminder nahi hai." :
+    schedules.map((s, i) => "<div style='padding:3px 0;display:flex;justify-content:space-between;'><span>⏰ " + s.task + " (" + s.time + ")</span><button class='btn-sm' onclick='removeSched(" + i + ")'>✕</button></div>").join("");
 }
-
-function removeSchedule(idx) {
-  schedules.splice(idx, 1);
+function removeSched(i) {
+  schedules.splice(i, 1);
   localStorage.setItem("AARU_SCHEDULES", JSON.stringify(schedules));
   updateScheduleCount();
 }
-
 function toggleScheduleModal() {
   let m = document.getElementById("scheduleModal");
   m.style.display = m.style.display === "flex" ? "none" : "flex";
@@ -319,51 +230,57 @@ function toggleScheduleModal() {
 }
 
 function detectAndSchedule(msg) {
-  let timeMatch = msg.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|baje))\b/i);
-  let hasKeyword = /\b(meet|meeting|remind|reminder|schedule|alarm|kal|tomorrow|yaad)\b/i.test(msg);
-  if (timeMatch && hasKeyword) {
-    let timeStr = timeMatch[1];
-    schedules.unshift({ task: msg, time: timeStr });
+  let m = msg.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i);
+  if (m && /\b(remind|reminder|meet|alarm|yaad|schedule)\b/i.test(msg)) {
+    let hr = parseInt(m[1], 10);
+    let min = m[2] ? parseInt(m[2], 10) : 0;
+    let ampm = (m[3] || "").toLowerCase();
+    if (ampm === "pm" && hr < 12) hr += 12;
+    if (ampm === "am" && hr === 12) hr = 0;
+    let time24 = String(hr).padStart(2, "0") + ":" + String(min).padStart(2, "0");
+    schedules.push({ task: msg, time: time24, fired: false });
     localStorage.setItem("AARU_SCHEDULES", JSON.stringify(schedules));
     updateScheduleCount();
-    let calUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent("Aaru Reminder: " + msg);
-    return { time: timeStr, task: msg, calUrl: calUrl };
+    return time24;
   }
   return null;
 }
 
-// SAVED CHATS
-let allChats = JSON.parse(localStorage.getItem("AARU_SAVED_CHATS") || "[]");
-let activeChatId = localStorage.getItem("AARU_ACTIVE_CHAT_ID") || "";
+setInterval(() => {
+  let now = new Date();
+  let cur = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+  schedules.forEach(s => {
+    if (!s.fired && s.time === cur) {
+      s.fired = true;
+      localStorage.setItem("AARU_SCHEDULES", JSON.stringify(schedules));
+      if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("⏰ Aaru Reminder for Aadi!", { body: s.task });
+      }
+      addMsgToUI("⏰ REMINDER ALERT AADI: " + s.task, "bot", true);
+      speakContinuous("Aadi, tumhara reminder time ho gaya hai: " + s.task);
+    }
+  });
+}, 10000);
+
+// 3. ALWAYS NEW CHAT ON OPEN
+let allChats = JSON.parse(localStorage.getItem("AARU_SAVED_CHATS") || "[]").filter(c => c.messages && c.messages.length > 1);
+let activeChatId = "";
 
 function saveChatsToStorage() {
   localStorage.setItem("AARU_SAVED_CHATS", JSON.stringify(allChats));
-  localStorage.setItem("AARU_ACTIVE_CHAT_ID", activeChatId);
   renderChatList();
 }
-
 function getActiveChat() {
   return allChats.find(c => c.id === activeChatId);
 }
-
-function initChats() {
-  if (allChats.length === 0) {
-    createNewChatSession();
-  } else {
-    if (!getActiveChat()) activeChatId = allChats[0].id;
-    loadChatToUI(activeChatId);
-    renderChatList();
-  }
-  updateScheduleCount();
-}
-
 function createNewChatSession() {
   let id = "chat_" + Date.now();
   let newSession = {
     id: id,
-    title: "New Chat with Aaru",
+    title: "New Chat",
     messages: [
-      { role: "bot", text: "Hii Aditya! Main Aaru hoon 💖 Mujhe Aditya Soni ne banaya hai. 404 error poori tarah hat chuka hai, ab mujhse kuch bhi pucho!" }
+      { role: "bot", text: "Hii Aadi! Main Aaru hoon 💖 Ab mujhme Kotlin aur Dart (Flutter) App Studio bhi jud gaya hai! Upar '📱 Make App' dabao ya mujhse kuch bhi pucho." }
     ]
   };
   allChats.unshift(newSession);
@@ -371,33 +288,15 @@ function createNewChatSession() {
   saveChatsToStorage();
   loadChatToUI(id);
 }
-
 function startNewChat() { createNewChatSession(); toggleDrawer(false); }
-
 function loadChatToUI(id) {
   activeChatId = id;
-  localStorage.setItem("AARU_ACTIVE_CHAT_ID", id);
   let session = getActiveChat();
   let c = document.getElementById("chat");
   c.innerHTML = "";
-  if (session) {
-    session.messages = session.messages.filter(m => !/exceeded your current quota|404 Not Found|^404$/i.test(m.text));
-    session.messages.forEach(m => addMsgToUI(m.text, m.role, false, m.recap || ""));
-  }
+  if (session) session.messages.forEach(m => addMsgToUI(m.text, m.role, false));
   renderChatList();
 }
-
-function deleteChat(e, id) {
-  e.stopPropagation();
-  allChats = allChats.filter(c => c.id !== id);
-  if (allChats.length === 0) createNewChatSession();
-  else {
-    if (activeChatId === id) activeChatId = allChats[0].id;
-    saveChatsToStorage();
-    loadChatToUI(activeChatId);
-  }
-}
-
 function renderChatList() {
   let list = document.getElementById("chatList");
   list.innerHTML = "";
@@ -405,11 +304,10 @@ function renderChatList() {
     let item = document.createElement("div");
     item.className = "chat-item" + (c.id === activeChatId ? " active" : "");
     item.onclick = () => { loadChatToUI(c.id); toggleDrawer(false); };
-    item.innerHTML = "<span class='chat-title'>💬 " + c.title + "</span><button class='del-chat' onclick=\"deleteChat(event, '" + c.id + "')\">🗑️</button>";
+    item.innerHTML = "<span>💬 " + c.title + "</span>";
     list.appendChild(item);
   });
 }
-
 function toggleDrawer(force) {
   let d = document.getElementById("drawer");
   let o = document.getElementById("drawerOverlay");
@@ -418,475 +316,464 @@ function toggleDrawer(force) {
   o.style.display = isOpen ? "block" : "none";
 }
 
-// FULL PARAGRAPH VOICE ENGINE
-let autoMic = false;
+// 4. KOTLIN & DART (FLUTTER) IDEA-TO-APP STUDIO ENGINE
+let lastGeneratedHTML = "";
+let lastAppIdea = "Aadi_Custom_App";
+
+function openStudio(prefill) {
+  document.getElementById("studioModal").style.display = "flex";
+  if (prefill) {
+    document.getElementById("appIdeaInp").value = prefill;
+    buildAppFromIdea();
+  } else if (!lastGeneratedHTML) {
+    document.getElementById("appIdeaInp").value = "Gold & Jewellery GST Bill Calculator";
+    buildAppFromIdea();
+  }
+}
+
+function closeStudio() {
+  document.getElementById("studioModal").style.display = "none";
+}
+
+function switchStudioTab(tab) {
+  document.getElementById("tabPreview").classList.toggle("active", tab === "preview");
+  document.getElementById("tabFlutter").classList.toggle("active", tab === "flutter");
+  document.getElementById("tabKotlin").classList.toggle("active", tab === "kotlin");
+
+  document.getElementById("liveAppFrame").style.display = tab === "preview" ? "block" : "none";
+  document.getElementById("flutterCodeView").style.display = tab === "flutter" ? "block" : "none";
+  document.getElementById("kotlinCodeView").style.display = tab === "kotlin" ? "block" : "none";
+}
+
+function generateFlutterTemplate(idea) {
+  return `// Dart (Flutter Material 3) - Created by Aditya Soni (Aadi)
+// Idea: ${idea}
+import 'package:flutter/material.dart';
+
+void main() => runApp(const AadiFlutterApp());
+
+class AadiFlutterApp extends StatelessWidget {
+  const AadiFlutterApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: '${idea}',
+      theme: ThemeData.dark(useMaterial3: true).copyWith(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent, brightness: Brightness.dark),
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _ctrl = TextEditingController();
+  String result = "Ready!";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('${idea}')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _ctrl,
+              decoration: const InputDecoration(labelText: 'Enter value', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () => setState(() => result = "Processed: \${_ctrl.text}"),
+              icon: const Icon(Icons.bolt),
+              label: const Text('Run Action'),
+            ),
+            const SizedBox(height: 20),
+            Text(result, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+}`;
+}
+
+function generateKotlinTemplate(idea) {
+  return `// Kotlin (Jetpack Compose Android) - Created by Aditya Soni (Aadi)
+// Idea: ${idea}
+package com.aditya.aaru.generated
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    AppScreen("${idea}")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AppScreen(title: String) {
+    var input by remember { mutableStateOf("") }
+    var output by remember { mutableStateOf("Ready for Aadi!") }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(text = title, style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            label = { Text("Enter Input") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(onClick = { output = "Result: \$input" }) {
+            Text("Execute")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = output, style = MaterialTheme.typography.bodyLarge)
+    }
+}`;
+}
+
+function generateInstantWorkingAppHTML(idea) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
+  .card { background: #1e293b; border-radius: 16px; padding: 18px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+  h2 { color: #38bdf8; font-size: 18px; margin-bottom: 6px; }
+  .sub { font-size: 11px; color: #94a3b8; margin-bottom: 14px; }
+  input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
+  button { width: 100%; padding: 11px; border-radius: 10px; border: none; background: linear-gradient(90deg, #ec4899, #8b5cf6); color: #fff; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
+  .out { margin-top: 12px; padding: 12px; background: #090d16; border-radius: 10px; border-left: 4px solid #22c55e; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>⚡ ${idea}</h2>
+    <div class="sub">Built with Aaru Flutter/Kotlin Engine by Aditya Soni</div>
+    <input id="v1" type="number" placeholder="Amount / Weight (Grams) ya Number 1" value="10">
+    <input id="v2" type="number" placeholder="Rate / Value 2 (e.g. Gold Rate)" value="7500">
+    <button onclick="calc()">🚀 Calculate / Run Idea</button>
+    <div id="res" class="out">Result yahan dikhega...</div>
+  </div>
+  <script>
+    function calc() {
+      let a = parseFloat(document.getElementById('v1').value) || 0;
+      let b = parseFloat(document.getElementById('v2').value) || 0;
+      let base = a * b;
+      let gst = base * 0.03;
+      let total = base + gst;
+      document.getElementById('res').innerHTML =
+        "<b>Base Value:</b> ₹" + base.toFixed(2) +
+        "<br><b>GST (3%):</b> ₹" + gst.toFixed(2) +
+        "<br><b>Grand Total:</b> ₹" + total.toFixed(2) +
+        "<br><b>Addition (A+B):</b> " + (a + b);
+    }
+    calc();
+  <\/script>
+</body>
+</html>`;
+}
+
+async function buildAppFromIdea() {
+  let idea = document.getElementById("appIdeaInp").value.trim() || "Custom Smart App";
+  lastAppIdea = idea;
+
+  // 1. Instant Zero-Wait Preview + Code Load
+  lastGeneratedHTML = generateInstantWorkingAppHTML(idea);
+  document.getElementById("liveAppFrame").srcdoc = lastGeneratedHTML;
+  document.getElementById("flutterCodeView").innerText = generateFlutterTemplate(idea);
+  document.getElementById("kotlinCodeView").innerText = generateKotlinTemplate(idea);
+  switchStudioTab("preview");
+
+  // 2. AI Custom Interactive App Upgrade in Background
+  try {
+    let prompt = "Create a complete, single-file mobile-responsive HTML5/CSS/JS interactive working app for this idea: '" + idea + "'. Dark modern UI, created by Aditya Soni. Return ONLY pure HTML code starting with <!DOCTYPE html> and no markdown fences.";
+    let aiHtml = await callModelRace([{ role: "user", parts: [{ text: prompt }] }], prompt);
+    let cleanHtml = aiHtml.replace(/```html|```/gi, "").trim();
+    if (cleanHtml.includes("<html") || cleanHtml.includes("<body") || cleanHtml.includes("<script")) {
+      lastGeneratedHTML = cleanHtml;
+      document.getElementById("liveAppFrame").srcdoc = lastGeneratedHTML;
+    }
+  } catch(e) {}
+}
+
+function copyStudioCode() {
+  let flt = document.getElementById("flutterCodeView");
+  let kt = document.getElementById("kotlinCodeView");
+  let txt = flt.style.display === "block" ? flt.innerText : (kt.style.display === "block" ? kt.innerText : lastGeneratedHTML);
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  alert("Code copy ho gaya Aadi!");
+}
+
+function downloadGeneratedApp() {
+  let blob = new Blob([lastGeneratedHTML], { type: "text/html" });
+  let a = document.createElement("a");
+  a.download = lastAppIdea.replace(/[^a-zA-Z0-9]/g, "_") + "_App.html";
+  a.href = URL.createObjectURL(blob);
+  a.click();
+}
+
+// 5. CONTINUOUS VOICE FOR AUTO-CHAT ONLY
+let autoChat = false;
 let isSpeaking = false;
-let speechQueue = [];
 let ttsAudio = new Audio();
 
-function stopSpeaking() {
-  speechQueue = [];
-  isSpeaking = false;
-  if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch(e){} }
-  try { ttsAudio.pause(); } catch(e){}
-}
-
-function splitIntoChunks(text) {
-  let clean = text.replace(/```[\s\S]*?```/g, " Code screen par likh diya hai. ").replace(/[*#_~`💖🎨📷🔊♾️📌]/g, " ").replace(/\s+/g, " ").trim();
-  let rawSentences = clean.split(/(?<=[.!?।|\n])\s+/);
-  let chunks = [];
-  for (let s of rawSentences) {
-    while (s.length > 165) {
-      let cut = s.lastIndexOf(" ", 165);
-      if (cut <= 0) cut = 165;
-      chunks.push(s.substring(0, cut).trim());
-      s = s.substring(cut).trim();
-    }
-    if (s.trim()) chunks.push(s.trim());
-  }
-  return chunks;
-}
-
-function speak(fullText) {
+function speakContinuous(fullText) {
   if (!fullText) return;
-  stopSpeaking();
-  speechQueue = splitIntoChunks(fullText);
-  if (speechQueue.length === 0) return;
   isSpeaking = true;
   if (rec) { try { rec.stop(); } catch(e){} }
-  playNextChunk();
-}
 
-function playNextChunk() {
-  if (speechQueue.length === 0) {
+  let clean = fullText
+    .replace(/```[\s\S]*?```/g, " Code screen par de diya hai Aadi. ")
+    .replace(/[!?\n]+/g, ", ")
+    .replace(/[*#_~`💖🎨📷🔊]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  let done = () => {
     isSpeaking = false;
-    if (autoMic && rec) setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
-    return;
-  }
-  let chunk = speechQueue.shift();
-  let usedNative = false;
+    if (autoChat && rec) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
+    }
+  };
+
   if (window.speechSynthesis) {
     try {
-      let voices = window.speechSynthesis.getVoices();
-      if (voices && voices.length > 0) {
-        let u = new SpeechSynthesisUtterance(chunk);
-        u.lang = "hi-IN";
-        u.pitch = 1.32;
-        u.rate = 1.1;
-        u.onend = () => playNextChunk();
-        u.onerror = () => playCloudChunk(chunk);
-        window.speechSynthesis.speak(u);
-        usedNative = true;
-      }
-    } catch(e) {}
+      window.speechSynthesis.cancel();
+      let u = new SpeechSynthesisUtterance(clean);
+      u.lang = "hi-IN";
+      u.pitch = 1.28;
+      u.rate = 1.12;
+      u.onend = done;
+      u.onerror = done;
+      window.speechSynthesis.speak(u);
+      return;
+    } catch(e){}
   }
-  if (!usedNative) playCloudChunk(chunk);
+
+  let url = "https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=" + encodeURIComponent(clean.substring(0, 200));
+  ttsAudio.src = url;
+  ttsAudio.onended = done;
+  ttsAudio.onerror = done;
+  ttsAudio.play().catch(done);
 }
 
-function playCloudChunk(chunk) {
-  let url1 = "https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=" + encodeURIComponent(chunk);
-  let url2 = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=hi&q=" + encodeURIComponent(chunk);
-  ttsAudio.src = url1;
-  ttsAudio.playbackRate = 1.12;
-  ttsAudio.onended = () => playNextChunk();
-  ttsAudio.onerror = () => {
-    ttsAudio.src = url2;
-    ttsAudio.playbackRate = 1.12;
-    ttsAudio.onended = () => playNextChunk();
-    ttsAudio.onerror = () => playNextChunk();
-    ttsAudio.play().catch(() => playNextChunk());
-  };
-  ttsAudio.play().catch(() => ttsAudio.onerror());
-}
-
-// VOICE-TO-TEXT
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 if (SpeechRec) {
   rec = new SpeechRec();
   rec.lang = "hi-IN";
-  rec.interimResults = true;
+  rec.interimResults = false;
   rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
   rec.onend = () => {
     document.getElementById("micBtn").classList.remove("listening");
-    let inp = document.getElementById("t");
-    if (inp.value.trim() && rec._finalCaptured) {
-      rec._finalCaptured = false;
-      send();
-    } else if (autoMic && !isSpeaking) {
+    if (autoChat && !isSpeaking) {
       setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
     }
   };
-  rec.onerror = () => document.getElementById("micBtn").classList.remove("listening");
-  rec.onresult = (e) => {
-    let transcript = "";
-    for (let i = 0; i < e.results.length; i++) {
-      transcript += e.results[i][0].transcript;
-      if (e.results[i].isFinal) rec._finalCaptured = true;
+  rec.onerror = () => {
+    document.getElementById("micBtn").classList.remove("listening");
+    if (autoChat && !isSpeaking) {
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 900);
     }
-    document.getElementById("t").value = transcript;
+  };
+  rec.onresult = (e) => {
+    let txt = e.results[0][0].transcript;
+    document.getElementById("t").value = txt;
+    send(true);
   };
 }
 
-async function requestMicPermission() {
-  try {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      let s = await navigator.mediaDevices.getUserMedia({ audio: true });
-      s.getTracks().forEach(t => t.stop());
-    }
-  } catch(e) {}
-}
-
-async function toggleAutoMic() {
-  await requestMicPermission();
-  autoMic = !autoMic;
+async function toggleAutoChat() {
+  await requestAllPermissions();
+  autoChat = !autoChat;
   let btn = document.getElementById("autoMicBtn");
-  btn.innerText = autoMic ? "🎙️ Auto: ON" : "🎙️ Auto";
-  btn.classList.toggle("active", autoMic);
-  if (autoMic && rec) { try { rec.start(); } catch(e){} }
-  else if (rec) { try { rec.stop(); } catch(e){} }
+  btn.innerText = autoChat ? "🎙️ Auto-Chat: ON" : "🎙️ Auto-Chat: OFF";
+  btn.classList.toggle("active", autoChat);
+  if (autoChat && rec) {
+    speakContinuous("Auto chat on ho gaya hai Aadi, ab tum lagatar baat kar sakte ho.");
+  } else {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (rec) { try { rec.stop(); } catch(e){} }
+  }
 }
 
 async function startSingleMic() {
-  stopSpeaking();
-  await requestMicPermission();
-  if (!rec) {
-    addMsgToUI("Mic chalane ke liye App Settings mein Microphone permission allow karein.", "bot", false, "");
-    return;
-  }
+  if (!rec) return;
   try { rec.start(); } catch(e) { try { rec.stop(); } catch(err){} }
 }
 
-// AUTO-SUMMARIZE & TOPIC RECAP
-async function summarizeChat() {
-  let session = getActiveChat();
-  if (!session || session.messages.length < 2) {
-    addMsgToUI("Abhi summarize karne ke liye chat chhoti hai Aditya!", "bot", false, "");
-    return;
-  }
-  let fullConvo = session.messages.slice(-10).map(m => (m.role === "user" ? "Aditya: " : "Aaru: ") + m.text).join("\n");
-  let prompt = "Is chat ka poora Auto-Summary 3 se 4 clear bullet points mein Hinglish mein do:\n" + fullConvo;
-  let loader = addMsgToUI("📝 Chat ka Auto-Summary ban rahi hoon...", "bot", false, "");
-  try {
-    let ans = await getUnlimitedAIReply([{ role: "user", parts: [{ text: prompt }] }], prompt);
-    loader.remove();
-    addMsgToUI("📝 Chat Auto-Summary:\n" + ans, "bot", true, "Saari zaroori baatein upar points mein cover ho gayi hain.");
-    speak(ans);
-  } catch(e) {
-    loader.remove();
-  }
-}
+// 6. FAST PARALLEL AI ENGINE
+const SYS_PROMPT = "Tumhara naam Aaru hai. Tumhe Aditya Soni ne banaya hai. User ko hamesha 'Aadi' bulao, kabhi 'bestie' mat bolna. Tumme Kotlin aur Dart (Flutter) App Studio built-in hai. Hamesha female grammar ('main kar rahi hoon', 'bataungi') mein Hinglish mein baat karo. Agar Aadi ke message mein typing mistake ho toh khud sahi matlab samajh kar turant jawab do.";
 
-function buildTopicRecap(ansText) {
-  if (ansText.length < 180) return "";
-  let sentences = ansText.split(/(?<=[.!?।])\s+/);
-  if (sentences.length < 2) return "";
-  return "📌 Topic Recap: " + sentences[0] + " " + (sentences[sentences.length - 1] || "");
-}
-
-// ZERO-404 MULTI-ENGINE (High-Quota Gemma-3 14,400 RPD + Gemini Models + Clean POST Pollinations + Smart Local Brain)
-function buildSystemPrompt() {
-  return "Tumhara naam Aaru hai. Tumhe Aditya Soni ne banaya aur develop kiya hai. Agar koi puche tumhe kisne banaya hai toh kaho: Mujhe Aditya Soni ne banaya hai! Tum ek smart aur sweet ladki ho, hamesha female grammar jaise main kar rahi hoon, bataungi mein Hinglish mein baat karo. User Mood: " + detectedMood + ". Har sawal ka poora aur detailed answer do.";
-}
-
-function isValidReply(txt) {
-  if (!txt || typeof txt !== "string") return false;
-  let t = txt.trim();
-  if (t.length < 2) return false;
-  if (/^404\b|404 Not Found|Not Found|<html|<!DOCTYPE|Bad Gateway|Service Unavailable|Rate limit/i.test(t)) return false;
-  return true;
-}
-
-function enforceGirlAndCreatorRules(txt) {
+function cleanReply(txt) {
   return txt
-    .replace(/Google ke logo dwara|Google dwara|Google ne banaya|trained by Google|developed by Google|OpenAI/gi, "Aditya Soni ne banaya")
+    .replace(/\bbestie\b/gi, "Aadi")
+    .replace(/Google ne banaya|trained by Google|OpenAI/gi, "Aditya Soni ne banaya")
     .replace(/\braha hoon\b/gi, "rahi hoon")
     .replace(/\braha hu\b/gi, "rahi hoon")
     .replace(/\bkarunga\b/gi, "karungi")
-    .replace(/\bbataunga\b/gi, "bataungi")
-    .replace(/\bsakta hoon\b/gi, "sakti hoon")
-    .replace(/\bsakta hu\b/gi, "sakti hoon")
-    .replace(/\bkarta hoon\b/gi, "karti hoon")
-    .replace(/\bsamajh gaya\b/gi, "samajh gayi");
+    .trim();
 }
 
-function extractGeminiText(d) {
-  let parts = d?.candidates?.[0]?.content?.parts || [];
-  let textParts = parts.filter(p => !p.thought && p.text).map(p => p.text);
-  if (textParts.length > 0) return textParts.join("\n").trim();
-  if (parts[0]?.text) return parts[0].text.trim();
-  return null;
-}
-
-async function getUnlimitedAIReply(apiContents, lastUserMsg) {
-  let sysText = buildSystemPrompt();
-
-  // 1. Try Google API Key across High-Quota Gemma-3 (14,400/day) & Gemini Flash variants
+async function callModelRace(apiContents, lastMsg) {
+  let tasks = [];
   if (key) {
-    let gemmaModels = ["gemma-3-27b-it", "gemma-3-12b-it", "gemma-3-4b-it"];
-    let geminiModels = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
-
-    // Try Gemini models first
-    for (let m of geminiModels) {
-      try {
+    ["gemma-3-27b-it", "gemini-2.5-flash-lite", "gemini-2.5-flash"].forEach(m => {
+      tasks.push((async () => {
+        let bodyObj = m.startsWith("gemma")
+          ? { contents: [{ role: "user", parts: [{ text: SYS_PROMPT + "\nAadi: " + lastMsg }] }] }
+          : { systemInstruction: { parts: [{ text: SYS_PROMPT }] }, contents: apiContents };
         let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent?key=" + key, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: sysText }] },
-            contents: apiContents,
-            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
-          })
+          body: JSON.stringify(bodyObj)
         });
-        if (r.ok) {
-          let d = await r.json();
-          let ans = extractGeminiText(d);
-          if (isValidReply(ans)) return ans;
-        }
-      } catch(e) {}
-    }
-
-    // Try High-Quota Gemma-3 models (14,400 requests/day on the same Gemini key!)
-    let gemmaContents = JSON.parse(JSON.stringify(apiContents));
-    if (gemmaContents.length > 0 && gemmaContents[0].parts && gemmaContents[0].parts[0]) {
-      gemmaContents[0].parts[0].text = "[Instructions: " + sysText + "]\n\n" + gemmaContents[0].parts[0].text;
-    }
-    for (let gm of gemmaModels) {
-      try {
-        let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + gm + ":generateContent?key=" + key, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            contents: gemmaContents,
-            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
-          })
-        });
-        if (r.ok) {
-          let d = await r.json();
-          let ans = extractGeminiText(d);
-          if (isValidReply(ans)) return ans;
-        }
-      } catch(e) {}
-    }
+        if (!r.ok) throw new Error("fail");
+        let d = await r.json();
+        let txt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!txt || txt.length < 2) throw new Error("empty");
+        return txt;
+      })());
+    });
   }
 
-  // 2. Unlimited Free POST Endpoint (Root Pollinations POST - Never hits URL path 404)
-  let oaMsgs = [{ role: "system", content: sysText }];
-  apiContents.forEach(c => {
-    oaMsgs.push({ role: c.role === "model" ? "assistant" : "user", content: c.parts[0]?.text || "" });
-  });
+  tasks.push((async () => {
+    let r = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "openai",
+        messages: [
+          { role: "system", content: SYS_PROMPT },
+          { role: "user", content: lastMsg }
+        ]
+      })
+    });
+    if (!r.ok) throw new Error("fail");
+    let d = await r.json();
+    let txt = d?.choices?.[0]?.message?.content;
+    if (!txt || /404 Not Found/i.test(txt)) throw new Error("empty");
+    return txt;
+  })());
 
-  let postUrls = ["https://text.pollinations.ai/", "https://text.pollinations.ai/openai"];
-  for (let pUrl of postUrls) {
-    try {
-      let r2 = await fetch(pUrl, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ model: "openai", messages: oaMsgs })
-      });
-      if (r2.ok) {
-        let raw = await r2.text();
-        try {
-          let parsed = JSON.parse(raw);
-          let choiceTxt = parsed?.choices?.[0]?.message?.content;
-          if (isValidReply(choiceTxt)) return choiceTxt.trim();
-        } catch(jsonErr) {
-          if (isValidReply(raw)) return raw.trim();
-        }
-      }
-    } catch(e) {}
-  }
-
-  // 3. Clean Alphanumeric GET Fallback (Strips dots and slashes so 404 never triggers)
-  try {
-    let cleanQ = lastUserMsg.replace(/[./\\?&#%]/g, " ").trim();
-    let getUrl = "https://text.pollinations.ai/" + encodeURIComponent("Reply in Hinglish as Aaru created by Aditya Soni to: " + cleanQ) + "?model=openai";
-    let r3 = await fetch(getUrl);
-    if (r3.ok) {
-      let ans3 = await r3.text();
-      if (isValidReply(ans3)) return ans3.trim();
-    }
-  } catch(e) {}
-
-  // 4. Built-in Offline Smart Aaru Reply (Guarantees 0% error rate)
-  return "Hii Aditya! Main Aaru tumhari baat sun rahi hoon. Agar tumne abhi tak upar 🔑 Key button mein apni Gemini API Key save nahi ki hai, toh ek baar save kar lo taaki mera 14,400 messages wala high-speed engine chal sake!";
+  return await Promise.any(tasks);
 }
 
-// PHOTO GENERATOR & UPLOAD
-let currentPhotoBase64 = null;
-let currentPhotoMime = "image/jpeg";
-
-function promptImageGen() {
-  let p = document.getElementById("t").value.trim();
-  if (!p) {
-    document.getElementById("t").value = "photo banao ";
-    document.getElementById("t").focus();
-  } else {
-    generateImage(p);
-    document.getElementById("t").value = "";
-  }
+async function summarizeChat() {
+  let s = getActiveChat();
+  if (!s || s.messages.length < 2) return;
+  let txt = s.messages.slice(-8).map(m => m.text).join("\n");
+  let ans = await callModelRace([], "Summarize in 3 short points for Aadi:\n" + txt);
+  addMsgToUI("📝 Summary:\n" + cleanReply(ans), "bot", true);
 }
 
-function generateImage(promptText) {
-  let cleanPrompt = promptText.replace(/photo banao|image banao|pic banao|generate image|generate|draw/gi, "").trim() || "cute anime girl";
-  addMsgToUI("🎨 Main abhi photo bana rahi hoon: " + cleanPrompt, "bot", true, "");
-  speak("Ruko Aditya, main abhi photo bana rahi hoon.");
-  let seed = Math.floor(Math.random() * 999999);
-  let imgUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(cleanPrompt + ", masterpiece, ultra detailed, 8k") + "?width=768&height=768&seed=" + seed + "&nologo=true";
-  let c = document.getElementById("chat");
-  let d = document.createElement("div");
-  d.className = "msg bot";
-  d.innerHTML = "Yeh dekho Aditya:<br><img src='" + imgUrl + "' crossorigin='anonymous'><div class='msg-actions'><a href='" + imgUrl + "' target='_blank' class='speak-chip'>⬇ Full HD Save</a></div>";
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-}
-
-function handleImageUpload(e) {
-  let file = e.target.files[0];
-  if (!file) return;
-  currentPhotoMime = file.type || "image/jpeg";
-  let reader = new FileReader();
-  reader.onload = function(evt) {
-    let dataUrl = evt.target.result;
-    currentPhotoBase64 = dataUrl.split(",")[1];
-    let c = document.getElementById("chat");
-    let d = document.createElement("div");
-    d.className = "msg user";
-    d.innerHTML = "Photo Uploaded:<br><img src='" + dataUrl + "'>";
-    c.appendChild(d);
-    c.scrollTop = c.scrollHeight;
-    speak("Photo aa gayi Aditya! Ab iske baare mein kuch bhi pooch lo.");
-  };
-  reader.readAsDataURL(file);
-}
-
-// SEND HANDLER
-async function send() {
+async function send(fromVoice) {
   let inp = document.getElementById("t");
   let msg = inp.value.trim();
   if (!msg) return;
-
-  if (shortcuts[msg]) msg = shortcuts[msg];
 
   if (msg.startsWith("AIzaSy") && msg.length > 30) {
     key = msg;
     localStorage.setItem("API_KEY", key);
     inp.value = "";
-    addMsgToUI("Nayi API Key save ho gayi Aditya! Ab 14,400 daily messages wala high-speed engine chalega.", "bot", true, "");
-    speak("Nayi API Key save ho gayi Aditya!");
+    addMsgToUI("API Key save ho gayi Aadi!", "bot", true);
     return;
   }
 
   inp.value = "";
-  addMsgToUI(msg, "user", true, "");
+  addMsgToUI(msg, "user", true);
 
   let session = getActiveChat();
-  if (session && session.title === "New Chat with Aaru") {
-    session.title = msg.substring(0, 34);
+  if (session && session.title === "New Chat") {
+    session.title = msg.substring(0, 28);
     saveChatsToStorage();
   }
 
-  let schedObj = detectAndSchedule(msg);
-  if (schedObj) {
-    let c = document.getElementById("chat");
-    let card = document.createElement("div");
-    card.className = "msg bot";
-    card.innerHTML = "⏰ <b>Smart Reminder Set!</b><br>Task: " + schedObj.task + "<br>Time: " + schedObj.time +
-      "<div class='msg-actions'><a href='" + schedObj.calUrl + "' target='_blank' class='speak-chip'>📅 Save to Google Calendar</a></div>";
-    c.appendChild(card);
-    c.scrollTop = c.scrollHeight;
-  }
-
-  if (/photo banao|image banao|pic banao|generate image|draw/i.test(msg)) {
-    generateImage(msg);
+  // If user asks to build/make an app in chat, launch the Kotlin/Flutter Studio directly!
+  if (/\b(app banao|make app|build app|apk banao|flutter app|kotlin app)\b/i.test(msg)) {
+    let ideaClean = msg.replace(/app banao|make app|build app|apk banao|flutter app|kotlin app/gi, "").trim() || "Smart Utility App";
+    addMsgToUI("🚀 Aadi, main tumhare idea ('" + ideaClean + "') ka Live App, Flutter (Dart) code aur Kotlin code Studio mein khol rahi hoon!", "bot", true);
+    openStudio(ideaClean);
     return;
   }
 
-  if (/kisne banaya|kisne bna|who made you|who created you|tumhara malik|tumhara creator/i.test(msg)) {
-    let cr = "Mujhe Aditya Soni ne banaya hai! Main unhi ki banayi hui smart aur cute AI best friend Aaru hoon.";
-    addMsgToUI(cr, "bot", true, "");
-    speak(cr);
+  let remTime = detectAndSchedule(msg);
+  if (remTime) {
+    addMsgToUI("⏰ Aadi, maine " + remTime + " ka reminder set kar diya hai!", "bot", true);
+  }
+
+  if (/kisne banaya|who made you|creator|malik/i.test(msg)) {
+    let cr = "Aadi, mujhe tumne (Aditya Soni ne) banaya hai!";
+    addMsgToUI(cr, "bot", true);
+    if (fromVoice || autoChat) speakContinuous(cr);
     return;
   }
 
-  let validMsgs = (session ? session.messages.filter(m => !/exceeded your current quota|404 Not Found|^404$/i.test(m.text)).slice(-6) : []);
-  let apiContents = validMsgs.map(m => ({
+  let apiContents = (session ? session.messages.slice(-5) : []).map(m => ({
     role: m.role === "user" ? "user" : "model",
     parts: [{ text: m.text }]
   }));
 
-  if (currentPhotoBase64 && apiContents.length > 0) {
-    apiContents[apiContents.length - 1].parts.push({
-      inlineData: { mimeType: currentPhotoMime, data: currentPhotoBase64 }
-    });
-    currentPhotoBase64 = null;
-  }
-
-  let loader = addMsgToUI("Aaru jawab likh rahi hai...", "bot", false, "");
+  let loader = addMsgToUI("...", "bot", false);
 
   try {
-    let ans = await getUnlimitedAIReply(apiContents, msg);
-    ans = enforceGirlAndCreatorRules(ans);
-    let recap = buildTopicRecap(ans);
+    let ans = await callModelRace(apiContents, msg);
+    ans = cleanReply(ans);
     loader.remove();
-    addMsgToUI(ans, "bot", true, recap);
-    speak(ans);
+    addMsgToUI(ans, "bot", true);
+    if (fromVoice || autoChat) speakContinuous(ans);
   } catch(e) {
     loader.remove();
-    addMsgToUI("Aditya, ek baar upar Key button mein apni Gemini API key check kar lo.", "bot", false, "");
+    addMsgToUI("Aadi, network check karo ya upar Key save karo.", "bot", false);
   }
 }
 
-function addMsgToUI(txt, role, saveToHistory, recapText) {
+function addMsgToUI(txt, role, save) {
   let c = document.getElementById("chat");
   let d = document.createElement("div");
   d.className = "msg " + role;
-
-  let textSpan = document.createElement("div");
-  textSpan.innerText = txt;
-  d.appendChild(textSpan);
-
-  if (recapText) {
-    let rBox = document.createElement("div");
-    rBox.className = "recap-box";
-    rBox.innerText = recapText;
-    d.appendChild(rBox);
-  }
-
-  if (role === "bot" && !txt.startsWith("Aaru jawab")) {
-    let actBar = document.createElement("div");
-    actBar.className = "msg-actions";
-
-    let spkBtn = document.createElement("button");
-    spkBtn.className = "speak-chip";
-    spkBtn.innerText = "🔊 Pura Suno";
-    spkBtn.onclick = () => speak(txt);
-    actBar.appendChild(spkBtn);
-
-    let stpBtn = document.createElement("button");
-    stpBtn.className = "speak-chip";
-    stpBtn.innerText = "⏹️ Ruko";
-    stpBtn.onclick = () => stopSpeaking();
-    actBar.appendChild(stpBtn);
-
-    d.appendChild(actBar);
-  }
-
+  d.innerText = txt;
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
-
-  if (saveToHistory) {
-    let session = getActiveChat();
-    if (session) {
-      session.messages.push({ role: role, text: txt, recap: recapText || "" });
+  if (save) {
+    let s = getActiveChat();
+    if (s) {
+      s.messages.push({ role: role, text: txt });
       saveChatsToStorage();
     }
   }
   return d;
 }
 
-checkLogin();
-initChats();
+createNewChatSession();
+updateScheduleCount();
 </script>
 </body>
 </html>
