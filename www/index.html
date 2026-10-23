@@ -4,12 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>Aaru Ultimate OS</title>
+<title>Aaru GodMode AI</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-  body { background: #090712; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  body { background: #080610; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* Header & Navigation */
+  /* Memory Toast (ChatGPT Style) */
+  #memToast { position: fixed; top: 58px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, 0.95); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 5000; display: none; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+
+  /* Gemini Live / ChatGPT Advanced Voice Orb Overlay */
+  #orbOverlay { position: fixed; inset: 0; background: radial-gradient(circle at center, #1e1035 0%, #05030a 80%); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 36px 20px; text-align: center; }
+  .orb-circle { width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #f472b6, #7c3aed, #0284c7); box-shadow: 0 0 60px #ec4899, inset 0 0 30px #38bdf8; animation: breathe 2.4s infinite ease-in-out; display: flex; align-items: center; justify-content: center; font-size: 42px; }
+  .orb-circle.speaking { animation: orbSpeak 0.6s infinite alternate ease-in-out; box-shadow: 0 0 95px #38bdf8, inset 0 0 45px #f472b6; }
+  @keyframes breathe { 0%, 100% { transform: scale(0.95); } 50% { transform: scale(1.08); } }
+  @keyframes orbSpeak { 0% { transform: scale(0.92) rotate(-3deg); } 100% { transform: scale(1.18) rotate(3deg); } }
+
+  /* Header & Dock */
   header { padding: 10px 12px; background: #140f24; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d204a; }
   .left-head { display: flex; align-items: center; gap: 8px; }
   .menu-btn { background: #241b38; color: #fff; border: 1px solid #3d2f5e; width: 34px; height: 34px; border-radius: 9px; font-size: 17px; cursor: pointer; }
@@ -18,14 +28,14 @@
   .top-btns { display: flex; gap: 5px; align-items: center; }
   .btn-sm { background: #241b38; color: #f1f5f9; border: 1px solid #3d2f5e; padding: 6px 9px; border-radius: 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
   .btn-sm.active { background: #db2777; color: #fff; border-color: #f472b6; }
+  .btn-orb { background: linear-gradient(90deg, #ec4899, #0284c7); border: none; color: #fff; }
 
-  /* Feature Dock Bar */
   .dock { background: #100b1c; padding: 7px 10px; display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #251b3d; }
   .dock::-webkit-scrollbar { display: none; }
-  .pill { background: #1c1430; border: 1px solid #3b2a5e; color: #e2e8f0; padding: 5px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .pill { background: #1c1430; border: 1px solid #3b2a5e; color: #e2e8f0; padding: 5px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
   .pill.active { background: linear-gradient(90deg, #ec4899, #8b5cf6); color: #fff; border-color: transparent; }
 
-  /* Sidebar Drawer */
+  /* Drawer */
   #drawerOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 900; display: none; }
   #drawer { position: fixed; top: 0; left: -290px; width: 280px; height: 100vh; background: #130e21; border-right: 1px solid #2e2147; z-index: 950; display: flex; flex-direction: column; transition: left 0.25s ease; }
   #drawer.open { left: 0; }
@@ -35,7 +45,7 @@
   .chat-item { padding: 10px; border-radius: 10px; background: #1e162e; color: #e2e8f0; font-size: 13px; cursor: pointer; }
   .chat-item.active { border: 1px solid #f472b6; background: #2a1b3d; }
 
-  /* Panels & Modals */
+  /* Panels */
   .panel { display: none; flex: 1; overflow-y: auto; padding: 14px; background: #0b0914; }
   .panel.active { display: flex; flex-direction: column; gap: 12px; }
   .card { background: #161126; border: 1px solid #2e2249; border-radius: 16px; padding: 14px; }
@@ -44,33 +54,41 @@
   .row { display: flex; gap: 8px; }
   .row > * { flex: 1; }
   .action-btn { width: 100%; padding: 10px; border-radius: 11px; border: none; background: linear-gradient(90deg, #ec4899, #8b5cf6); color: #fff; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 4px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stat-box { background: #0e0a19; border: 1px solid #281d40; padding: 10px; border-radius: 12px; font-size: 12px; }
-  .stat-val { font-size: 16px; font-weight: 800; color: #38bdf8; margin-top: 3px; }
-  pre.code-box { background: #06040a; color: #4ade80; padding: 10px; border-radius: 10px; font-family: monospace; font-size: 11.5px; overflow-x: auto; white-space: pre-wrap; border: 1px solid #1e293b; max-height: 240px; }
+  pre.code-box { background: #06040a; color: #4ade80; padding: 10px; border-radius: 10px; font-family: monospace; font-size: 11.5px; overflow-x: auto; white-space: pre-wrap; border: 1px solid #1e293b; max-height: 250px; }
 
   /* Chat Area */
   #chatPanel { padding: 14px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .msg { max-width: 92%; padding: 10px 14px; border-radius: 15px; font-size: 14.5px; line-height: 1.45; word-wrap: break-word; white-space: pre-wrap; }
   .user { background: #db2777; align-self: flex-end; border-bottom-right-radius: 3px; color: #fff; }
   .bot { background: #1e162e; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid #3b2d54; }
-  .msg img, .msg canvas { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
+  .msg img { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
 
-  /* Bottom Input Bar */
   .bar { padding: 8px 10px; background: #140f24; display: flex; align-items: center; gap: 6px; border-top: 1px solid #2d204a; }
   #t { flex: 1; padding: 10px 14px; border-radius: 22px; border: 1px solid #3b2d54; background: #090712; color: #fff; outline: none; font-size: 14px; }
   .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #241b38; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .icon-btn.listening { background: #ef4444; animation: pulse 1s infinite; }
   .send-btn { background: #f472b6; color: #000; font-weight: bold; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
-  /* Printable GST Invoice Styling */
   #invoicePreview { background: #fff; color: #0f172a; padding: 14px; border-radius: 10px; margin-top: 10px; font-size: 12px; display: none; }
   #invoicePreview table { width: 100%; border-collapse: collapse; margin: 8px 0; }
   #invoicePreview th, #invoicePreview td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; }
 </style>
 </head>
 <body>
+
+<div id="memToast">🧠 Memory Updated by Aaru</div>
+
+<!-- GEMINI LIVE / CHATGPT ADVANCED VOICE ORB -->
+<div id="orbOverlay">
+  <div>
+    <div style="font-size:20px;font-weight:800;color:#f472b6;">Aaru Live Voice Mode</div>
+    <div id="orbSub" style="font-size:13px;color:#94a3b8;margin-top:4px;">Bolo Aadi, main lagatar sun rahi hoon...</div>
+  </div>
+  <div id="orbVisual" class="orb-circle" onclick="triggerOrbListen()">💖</div>
+  <div style="width:100%;max-width:320px;display:flex;gap:10px;">
+    <button class="action-btn" onclick="triggerOrbListen()">🎤 Speak Now</button>
+    <button class="action-btn" style="background:#ef4444;" onclick="closeVoiceOrb()">✕ Exit Live</button>
+  </div>
+</div>
 
 <div id="drawerOverlay" onclick="toggleDrawer()"></div>
 <div id="drawer">
@@ -82,21 +100,19 @@
   <div id="chatList"></div>
 </div>
 
-<!-- HEADER WITH MOOD SWITCHER & AUTO-CHAT -->
 <header>
   <div class="left-head">
     <button class="menu-btn" onclick="toggleDrawer()">☰</button>
-    <div class="title"><span class="dot"></span> Aaru OS 💖</div>
+    <div class="title"><span class="dot"></span> Aaru GodMode 💖</div>
   </div>
   <div class="top-btns">
-    <select id="moodSelect" class="btn-sm" onchange="changeAIMood(this.value)">
-      <option value="Sweet & Caring Girlfriend/Friend">💖 Cute</option>
-      <option value="Smart Business & Jewellery Expert">💼 Business</option>
-      <option value="Senior Rust, JS, Flutter & Kotlin Coder">💻 Coder</option>
-      <option value="Funny & Savage Dost">😎 Funny</option>
-      <option value="Formal & Professional Assistant">👔 Formal</option>
+    <button class="btn-sm btn-orb" onclick="openVoiceOrb()">🔴 Live Orb</button>
+    <select id="moodSelect" class="btn-sm" onchange="currentMood=this.value">
+      <option value="Sweet & Caring Best Friend">💖 Cute</option>
+      <option value="Jewellery & Business Expert">💼 Business</option>
+      <option value="Pro Rust, C, JS & Flutter Coder">💻 Coder</option>
+      <option value="Funny & Savage">😎 Funny</option>
     </select>
-    <button id="autoMicBtn" class="btn-sm" onclick="toggleAutoChat()">🎧 Auto: OFF</button>
     <button class="btn-sm" onclick="toggleKey()">🔑</button>
   </div>
 </header>
@@ -106,217 +122,143 @@
   <button class="btn-sm active" onclick="saveKey()">Save</button>
 </div>
 
-<!-- ALL-IN-ONE FEATURE DOCK -->
+<!-- FEATURE DOCK -->
 <div class="dock">
-  <span class="pill active" id="nav_chat" onclick="switchView('chat')">💬 AI Chat</span>
-  <span class="pill" id="nav_gst" onclick="switchView('gst')">🧾 GST Bill/PDF</span>
-  <span class="pill" id="nav_insta" onclick="switchView('insta')">📸 Insta Manager</span>
+  <span class="pill active" id="nav_chat" onclick="switchView('chat')">💬 Chat</span>
+  <span class="pill" id="nav_termux" onclick="switchView('termux')">⚙️ Termux (Node/FFmpeg/Clang)</span>
+  <span class="pill" id="nav_canvas" onclick="switchView('canvas')">✨ Gemini Canvas & Deep Research</span>
+  <span class="pill" id="nav_mem" onclick="switchView('mem')">🧠 ChatGPT Memory</span>
+  <span class="pill" id="nav_gst" onclick="switchView('gst')">🧾 GST Bill</span>
+  <span class="pill" id="nav_insta" onclick="switchView('insta')">📸 Insta Poster</span>
   <span class="pill" id="nav_sql" onclick="switchView('sql')">🗄️ SQLite DB</span>
-  <span class="pill" id="nav_img" onclick="switchView('img')">🎨 Image Studio</span>
-  <span class="pill" id="nav_hw" onclick="switchView('hw')">📱 Hardware & Neckband</span>
-  <span class="pill" id="nav_live" onclick="switchView('live')">🌐 Live Scraper</span>
-  <span class="pill" id="nav_cargo" onclick="switchView('cargo')">🦀 Rust Cargo & ⚡ JS</span>
 </div>
 
-<!-- 1. MAIN CHAT VIEW -->
+<!-- 1. CHAT VIEW -->
 <div id="view_chat" class="panel active" style="padding:0;">
   <div id="chatPanel"></div>
 </div>
 
-<!-- 2. AUTO PDF / GST BILL GENERATOR -->
+<!-- 2. TERMUX POWERHOUSE (NODE.JS + FFMPEG + CLANG + WGET/CURL) -->
+<div id="view_termux" class="panel">
+  <div class="card">
+    <h3>⚙️ Termux Local Server (Node.js + FFmpeg + Clang) <span id="txStatus" style="font-size:11px;color:#4ade80;">Checking...</span></h3>
+    <button class="btn-sm active" style="margin-bottom:8px;" onclick="checkTermuxServer()">🔄 Check Node/FFmpeg/Clang Status</button>
+    <pre id="txStatusOut" class="code-box">Click above to check Termux connection...</pre>
+  </div>
+
+  <div class="card">
+    <h3>⚡ Clang Native C/C++ Compiler (ARM64 CPU)</h3>
+    <textarea id="clangCode" class="inp" rows="4" style="font-family:monospace;">#include <stdio.h>
+int main() {
+    double gold_10g = 77200;
+    printf("🦀 Native Clang Executed by Aadi!\\nWith 3%% GST: Rs %.2f\\n", gold_10g * 1.03);
+    return 0;
+}</textarea>
+    <button class="action-btn" onclick="runClangCode()">🚀 Compile & Run with Clang</button>
+    <pre id="clangOut" class="code-box" style="margin-top:8px;">Clang output yahan aayega...</pre>
+  </div>
+
+  <div class="card">
+    <h3>🎬 FFmpeg Auto-Reel Maker & 📥 Wget Downloader</h3>
+    <button class="action-btn" onclick="makeFFmpegReel()">🎬 Generate .MP4 Reel via FFmpeg</button>
+    <div class="row" style="margin-top:8px;">
+      <input id="wgetUrl" class="inp" placeholder="Direct File URL to download to File Manager...">
+      <button class="btn-sm active" onclick="runWgetDownload()">📥 Wget Save</button>
+    </div>
+    <pre id="ffmpegOut" class="code-box" style="margin-top:6px;">Ready...</pre>
+  </div>
+</div>
+
+<!-- 3. GEMINI CANVAS & DEEP RESEARCH -->
+<div id="view_canvas" class="panel">
+  <div class="card">
+    <h3>✨ Gemini Interactive Canvas & Deep Research</h3>
+    <input id="canvasPrompt" class="inp" placeholder="Topic ya App likho (e.g. Gold Investment Strategy 2026 ya Calculator HTML)...">
+    <div class="row">
+      <button class="action-btn" onclick="runDeepResearch()">🔍 Deep Research Report</button>
+      <button class="action-btn" onclick="generateLiveCanvasCode()">💻 Live Code Canvas</button>
+    </div>
+    <textarea id="canvasEditor" class="inp" rows="8" style="margin-top:10px;font-family:monospace;font-size:12px;" placeholder="Canvas live editor..."></textarea>
+    <div class="row">
+      <button class="btn-sm active" onclick="previewCanvasHTML()">▶️ Run HTML Preview</button>
+      <button class="btn-sm" onclick="copyCanvas()">📋 Copy Canvas</button>
+    </div>
+    <iframe id="canvasFrame" style="width:100%;height:220px;border:1px solid #3b2d54;border-radius:10px;margin-top:8px;display:none;background:#fff;"></iframe>
+  </div>
+</div>
+
+<!-- 4. CHATGPT PERSISTENT MEMORY BANK -->
+<div id="view_mem" class="panel">
+  <div class="card">
+    <h3>🧠 ChatGPT-Style Persistent Memory Bank</h3>
+    <p style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Yahan save ki gayi har baat Aaru hamesha yaad rakhegi, chahe aap app band karke dobara kholein.</p>
+    <div class="row">
+      <input id="memInp" class="inp" placeholder="Add fact (e.g. Mera naam Aditya Soni hai, Kanpur se)...">
+      <button class="btn-sm active" onclick="addManualMemory()">＋ Save</button>
+    </div>
+    <div id="memList" style="margin-top:8px;font-size:12.5px;"></div>
+  </div>
+</div>
+
+<!-- 5. GST BILL / PDF GENERATOR -->
 <div id="view_gst" class="panel">
   <div class="card">
-    <h3>🧾 Auto GST Bill & PDF Generator <span style="font-size:11px;color:#4ade80;">HSN: 7113 (3% GST)</span></h3>
-    <input id="bShop" class="inp" value="Soni Gems & Jewellers, Kanpur" placeholder="Shop Name">
+    <h3>🧾 Auto GST Bill & PDF Generator (HSN: 7113)</h3>
+    <input id="bShop" class="inp" value="Pari Jewellers, Kanpur" placeholder="Shop Name">
     <div class="row">
-      <input id="bCust" class="inp" placeholder="Customer Name (e.g. Rahul Sharma)">
-      <input id="bMob" class="inp" placeholder="Mobile No.">
-    </div>
-    <input id="bItem" class="inp" value="22K Gold Ring (Hallmarked 916)" placeholder="Jewellery Item Name">
-    <div class="row">
-      <input id="bWt" type="number" step="0.01" class="inp" value="5.5" placeholder="Weight (Grams)">
-      <input id="bRate" type="number" class="inp" value="7450" placeholder="Gold Rate / gm (₹)">
+      <input id="bCust" class="inp" placeholder="Customer Name">
+      <input id="bItem" class="inp" value="22K Hallmark Gold Ring">
     </div>
     <div class="row">
-      <input id="bMaking" type="number" class="inp" value="650" placeholder="Making Charge / gm (₹)">
-      <input id="bDisc" type="number" class="inp" value="0" placeholder="Discount (₹)">
+      <input id="bWt" type="number" step="0.01" class="inp" value="5.5" placeholder="Wt (g)">
+      <input id="bRate" type="number" class="inp" value="7450" placeholder="Rate/g (₹)">
     </div>
-    <button class="action-btn" onclick="generateGSTInvoice()">⚡ Generate GST Bill</button>
-
+    <button class="action-btn" onclick="generateGSTInvoice()">⚡ Generate GST Invoice</button>
     <div id="invoicePreview"></div>
-    <div class="row" style="margin-top:8px;">
-      <button class="btn-sm active" onclick="printOrSavePDF()">📄 Save PDF / Print Bill</button>
-      <button class="btn-sm" onclick="shareBillOnWhatsApp()">📲 Share Bill Text</button>
-    </div>
+    <button class="btn-sm active" style="margin-top:8px;width:100%;padding:9px;" onclick="window.print()">📄 Save PDF / Print Bill</button>
   </div>
 </div>
 
-<!-- 3. INSTAGRAM SOCIAL MEDIA MANAGER (THE JEWELLERY EDIT) -->
+<!-- 6. INSTAGRAM POSTER MANAGER -->
 <div id="view_insta" class="panel">
   <div class="card">
-    <h3>📸 Instagram Manager (The Jewellery Edit)</h3>
+    <h3>📸 Instagram Rate Poster (The Jewellery Edit)</h3>
     <div class="row">
-      <input id="igGold24" class="inp" value="77,200" placeholder="24K Gold Rate (10g)">
-      <input id="igGold22" class="inp" value="71,400" placeholder="22K Gold Rate (10g)">
-      <input id="igSilver" class="inp" value="92,500" placeholder="Silver Rate (1kg)">
+      <input id="igGold24" class="inp" value="77,200" placeholder="24K Rate">
+      <input id="igGold22" class="inp" value="71,400" placeholder="22K Rate">
+      <input id="igSilver" class="inp" value="92,500" placeholder="Silver Rate">
     </div>
-    <input id="igTitle" class="inp" value="THE JEWELLERY EDIT • TODAY'S GOLD RATE" placeholder="Poster Header">
-    <button class="action-btn" onclick="drawInstaRatePoster()">🎨 Generate HD Rate Update Poster</button>
-    <canvas id="instaCanvas" style="width:100%;max-width:340px;margin:10px auto 0;border-radius:12px;display:none;border:1px solid #f472b6;"></canvas>
-    <button id="dlInstaBtn" class="btn-sm active" style="display:none;margin-top:8px;width:100%;padding:9px;" onclick="downloadInstaPoster()">⬇ Download Instagram Poster</button>
-  </div>
-
-  <div class="card">
-    <h3>✨ Viral Caption & Hashtag Generator</h3>
-    <input id="igTopic" class="inp" placeholder="Post किस बारे में है? (e.g. Bridal Gold Necklace Set)">
-    <button class="action-btn" onclick="generateInstaCaption()">🚀 Generate Caption + 25 Hashtags</button>
-    <pre id="igCaptionOut" class="code-box" style="margin-top:8px;display:none;"></pre>
+    <button class="action-btn" onclick="drawInstaRatePoster()">🎨 Generate HD Poster</button>
+    <canvas id="instaCanvas" style="width:100%;max-width:320px;margin:10px auto 0;border-radius:12px;display:none;border:1px solid #f472b6;"></canvas>
+    <button id="dlInstaBtn" class="btn-sm active" style="display:none;margin-top:8px;width:100%;padding:9px;" onclick="downloadInstaPoster()">⬇ Download Poster</button>
   </div>
 </div>
 
-<!-- 4. PERSONAL SQLITE TRACKER -->
+<!-- 7. SQLITE TRACKER -->
 <div id="view_sql" class="panel">
   <div class="card">
-    <h3>🗄️ Personal SQLite Tracker <span id="sqlCount" style="font-size:11px;color:#38bdf8;">0 Rows</span></h3>
+    <h3>🗄️ Personal SQLite Tracker</h3>
     <div class="row">
-      <select id="sqlCat" class="inp">
-        <option value="Income">💰 Income / Sale</option>
-        <option value="Expense">💸 Expense</option>
-        <option value="Gold_Stock">💍 Gold Stock</option>
-        <option value="Personal_Note">📌 Personal Note</option>
-      </select>
-      <input id="sqlAmt" type="number" class="inp" placeholder="Amount / Grams (₹)">
+      <input id="sqlNote" class="inp" placeholder="Item / Expense Details">
+      <input id="sqlAmt" type="number" class="inp" placeholder="Amount ₹">
     </div>
-    <input id="sqlNote" class="inp" placeholder="Details (e.g. Sold 1 Gold Chain, Gym Protein)...">
-    <div class="row">
-      <button class="action-btn" onclick="sqlInsert()">➕ INSERT INTO sqlite_db</button>
-      <button class="btn-sm" onclick="exportSQLiteJSON()">📤 Export JSON</button>
-    </div>
-    <input id="sqlSearch" class="inp" style="margin-top:10px;" placeholder="🔍 SELECT * FROM tracker WHERE note LIKE..." oninput="sqlRender()">
-    <div id="sqlTableOut" style="margin-top:6px;font-size:12px;"></div>
+    <button class="action-btn" onclick="sqlInsert()">➕ INSERT INTO sqlite_db</button>
+    <div id="sqlTableOut" style="margin-top:8px;font-size:12px;"></div>
   </div>
 </div>
 
-<!-- 5. IMAGE GENERATION & MANIPULATION STUDIO -->
-<div id="view_img" class="panel">
-  <div class="card">
-    <h3>🎨 AI Image Generator & Filter Studio</h3>
-    <input id="imgPromptInp" class="inp" placeholder="Kaisi photo banani hai? (e.g. Royal Gold Necklace on velvet)">
-    <button class="action-btn" onclick="generateStudioImage()">✨ Generate HD Image</button>
-    <div id="genImgBox" style="margin-top:10px;"></div>
-  </div>
-  <div class="card">
-    <h3>🪄 Photo Manipulation (Upload & Filter)</h3>
-    <input type="file" accept="image/*" class="inp" onchange="loadManipImage(event)">
-    <canvas id="manipCanvas" style="max-width:100%;border-radius:10px;display:none;margin-top:8px;"></canvas>
-    <div class="row" style="margin-top:8px;flex-wrap:wrap;">
-      <button class="btn-sm" onclick="filterManip('none')">Original</button>
-      <button class="btn-sm" onclick="filterManip('contrast(1.3) saturate(1.4)')">✨ HD Gold</button>
-      <button class="btn-sm" onclick="filterManip('sepia(0.45) contrast(1.2)')">🎬 Vintage</button>
-      <button class="btn-sm" onclick="filterManip('grayscale(1) contrast(1.4)')">🖤 B&W</button>
-      <button class="btn-sm active" onclick="saveManipImage()">⬇ Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- 6. HARDWARE ACCESS & NECKBAND VOICE CONTROL -->
-<div id="view_hw" class="panel">
-  <div class="card">
-    <h3>🎧 Neckband / Earphone Direct Control</h3>
-    <p style="font-size:12px;color:#cbd5e1;margin-bottom:8px;">Is button ko on karne ke baad jab aap apne <b>Aroma Neckband</b> ya Earphone ka Play/Pause button dabayenge, Aaru seedha aapki aawaz sunegi!</p>
-    <button id="neckbandBtn" class="action-btn" onclick="enableNeckbandControl()">🎧 Activate Neckband Button Listener</button>
-  </div>
-  <div class="card">
-    <h3>📱 Real Phone Hardware Control</h3>
-    <div class="grid-2">
-      <div class="stat-box">🔋 Battery Status<div id="hwBat" class="stat-val">Checking...</div></div>
-      <div class="stat-box">👣 Daily Steps<div id="hwSteps" class="stat-val">0</div></div>
-      <div class="stat-box">🌐 Network Speed<div id="hwNet" class="stat-val">Online</div></div>
-      <div class="stat-box">🧠 Device Memory<div id="hwMem" class="stat-val">Active</div></div>
-    </div>
-    <div class="row" style="margin-top:10px;">
-      <button class="btn-sm active" onclick="triggerVibration()">📳 Test Vibrate</button>
-      <button class="btn-sm" onclick="toggleScreenTorch()">🔦 Screen Torch</button>
-      <button class="btn-sm" onclick="triggerProactiveNow()">🔔 Test Proactive AI</button>
-    </div>
-  </div>
-</div>
-
-<!-- 7. LIVE DATA SCRAPER -->
-<div id="view_live" class="panel">
-  <div class="card">
-    <h3>🌐 Live Data Scraper & Market Fetcher</h3>
-    <div class="row" style="margin-bottom:8px;">
-      <button class="btn-sm active" onclick="fetchLiveMarket()">💰 Live Crypto/Gold Global</button>
-      <button class="btn-sm" onclick="fetchKanpurWeather()">⛅ Kanpur Weather</button>
-    </div>
-    <input id="scrapeUrlInp" class="inp" placeholder="Kisi bhi website/API ka URL dalein (https://...)">
-    <button class="action-btn" onclick="scrapeCustomURL()">🕸️ Scrape Live Data</button>
-    <pre id="scrapeOut" class="code-box" style="margin-top:8px;">Ready to fetch live data...</pre>
-  </div>
-</div>
-
-<!-- 8. RUST CARGO + CRASH PROTECTION + JS EVENT LOOP & JSON POWER -->
-<div id="view_cargo" class="panel">
-  <div class="card">
-    <h3>🦀 Cargo (All-in-One Rust Tool & App Studio)</h3>
-    <input id="cargoIdea" class="inp" value="gold_gst_engine" placeholder="Crate / App Name">
-    <div class="row" style="margin-bottom:8px;">
-      <button class="btn-sm active" onclick="runCargoCmd('new')">📦 cargo new</button>
-      <button class="btn-sm" onclick="runCargoCmd('check')">🛡️ cargo check (Crash Guard)</button>
-      <button class="btn-sm" onclick="runCargoCmd('run')">🚀 cargo run --release</button>
-      <button class="btn-sm" onclick="runCargoCmd(' studio')">📱 5-Lang Code</button>
-    </div>
-    <pre id="cargoOut" class="code-box"></pre>
-  </div>
-
-  <div class="card">
-    <h3>⚡ JavaScript Event Loop & JSON Power</h3>
-    <div class="row" style="margin-bottom:8px;">
-      <button class="btn-sm active" onclick="simulateEventLoop()">🔄 Run Event Loop Visualizer</button>
-      <button class="btn-sm" onclick="formatJSONPower()">🧩 JSON Power Formatter</button>
-    </div>
-    <textarea id="jsonInp" class="inp" rows="3" style="font-family:monospace;">{"creator":"Aditya Soni","assistant":"Aaru","languages":["Rust","JavaScript","Kotlin","Dart"],"crashProtection":true}</textarea>
-    <pre id="jsLoopOut" class="code-box">Event Loop & JSON output yahan dikhega...</pre>
-  </div>
-</div>
-
-<input type="file" id="chatImgUpload" accept="image/*" style="display:none" onchange="sendChatImage(event)">
-
-<!-- BOTTOM CHAT BAR -->
 <div class="bar">
-  <button class="icon-btn" onclick="document.getElementById('chatImgUpload').click()" title="Upload Photo">📷</button>
-  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Mic">🎤</button>
-  <input type="text" id="t" placeholder="Aadi, yahan likho (Fast Silent Mode)..." onkeypress="if(event.key==='Enter') send(false)">
+  <button class="icon-btn" onclick="openVoiceOrb()" title="Live Voice Orb">🔴</button>
+  <button id="micBtn" class="icon-btn" onclick="startSingleMic()" title="Voice Input">🎤</button>
+  <input type="text" id="t" placeholder="Aadi, kuch bhi pucho ya 'yaad rakho...' likho..." onkeypress="if(event.key==='Enter') send(false)">
   <button class="icon-btn send-btn" onclick="send(false)">➤</button>
 </div>
 
 <script>
-// ==========================================================
-// 🦀 1. RUST-STYLE CRASH PROTECTION LAYER (Global Guard)
-// ==========================================================
-let crashLogs = 0;
-window.onerror = function(msg, src, line) {
-  crashLogs++;
-  console.warn("🦀 Rust Crash-Guard intercepted error:", msg, "at line", line);
-  return true; // Prevents WebView/App from ever crashing or freezing!
-};
-window.addEventListener("unhandledrejection", function(e) {
-  crashLogs++;
-  e.preventDefault();
-});
-
-function rustSafeTry(fn, fallbackVal = null) {
-  try { return fn(); } catch(e) { crashLogs++; return fallbackVal; }
-}
-
-// ==========================================================
-// 🔑 2. API KEY & NAVIGATION
-// ==========================================================
 let defaultKey = "";
-rustSafeTry(() => { defaultKey = atob("").trim(); });
+try { defaultKey = atob("").trim(); } catch(e){}
 let key = (localStorage.getItem("API_KEY") || defaultKey || "").trim();
-let currentMood = "Sweet & Caring Girlfriend/Friend";
+let currentMood = "Sweet & Caring Best Friend";
 
 function toggleKey() {
   let b = document.getElementById("keyBox");
@@ -329,603 +271,324 @@ function saveKey() {
   document.getElementById("keyBox").style.display = "none";
   addMsgToUI("✅ API Key save ho gayi Aadi!", "bot", true);
 }
-function changeAIMood(val) {
-  currentMood = val;
-  addMsgToUI("🎭 Aadi, mera baat karne ka style ab '" + val + "' par set ho gaya hai!", "bot", false);
-}
 
 function switchView(v) {
-  ["chat","gst","insta","sql","img","hw","live","cargo"].forEach(id => {
+  ["chat","termux","canvas","mem","gst","insta","sql"].forEach(id => {
     let p = document.getElementById("view_" + id);
     let n = document.getElementById("nav_" + id);
     if (p) p.classList.toggle("active", id === v);
     if (n) n.classList.toggle("active", id === v);
   });
-  if (v === "hw") refreshHardwareStats();
+  if (v === "termux") checkTermuxServer();
+  if (v === "mem") renderMemories();
   if (v === "sql") sqlRender();
-  if (v === "cargo" && !document.getElementById("cargoOut").innerText) runCargoCmd("new");
 }
 
 // ==========================================================
-// 🧾 3. AUTO PDF / GST BILL GENERATOR
+// 🧠 1. CHATGPT-STYLE AUTO-MEMORY ENGINE
 // ==========================================================
-let lastBillText = "";
-function generateGSTInvoice() {
-  let shop = document.getElementById("bShop").value.trim() || "Soni Jewellers";
-  let cust = document.getElementById("bCust").value.trim() || "Walk-in Customer";
-  let mob = document.getElementById("bMob").value.trim() || "-";
-  let item = document.getElementById("bItem").value.trim() || "22K Gold Jewellery";
-  let wt = parseFloat(document.getElementById("bWt").value) || 0;
-  let rate = parseFloat(document.getElementById("bRate").value) || 0;
-  let makingPerGm = parseFloat(document.getElementById("bMaking").value) || 0;
-  let disc = parseFloat(document.getElementById("bDisc").value) || 0;
+let memories = JSON.parse(localStorage.getItem("AARU_MEMORIES") || '["User ka naam Aditya Soni (Aadi) hai aur wahi Aaru ka creator hai.","Aadi Kanpur se hai aur Pari Jewellers & The Jewellery Edit संभालता hai."]');
 
-  let goldVal = wt * rate;
-  let makingVal = wt * makingPerGm;
-  let taxable = Math.max(0, goldVal + makingVal - disc);
-  let cgst = taxable * 0.015;
-  let sgst = taxable * 0.015;
-  let grand = Math.round(taxable + cgst + sgst);
-  let invNo = "INV-" + Date.now().toString().slice(-5);
-  let dt = new Date().toLocaleDateString("en-IN");
-
-  let html = `
-    <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:6px;">
-      <h2 style="margin:0;color:#b45309;">${shop}</h2>
-      <div style="font-size:11px;">TAX INVOICE (GST HSN: 7113) • Date: ${dt} • No: ${invNo}</div>
-    </div>
-    <div style="margin:8px 0;"><b>Customer:</b> ${cust} (${mob})</div>
-    <table>
-      <tr><th>Description</th><th>Wt (g)</th><th>Rate/g</th><th>Amount</th></tr>
-      <tr><td>${item}</td><td>${wt.toFixed(2)}g</td><td>₹${rate}</td><td>₹${goldVal.toFixed(2)}</td></tr>
-      <tr><td>Making Charges</td><td>${wt.toFixed(2)}g</td><td>₹${makingPerGm}</td><td>₹${makingVal.toFixed(2)}</td></tr>
-      ${disc > 0 ? `<tr><td colspan="3">Discount</td><td>-₹${disc.toFixed(2)}</td></tr>` : ""}
-      <tr><td colspan="3"><b>Taxable Amount</b></td><td><b>₹${taxable.toFixed(2)}</b></td></tr>
-      <tr><td colspan="3">CGST (1.5%) + SGST (1.5%)</td><td>₹${(cgst+sgst).toFixed(2)}</td></tr>
-      <tr style="background:#fef3c7;font-size:14px;"><td colspan="3"><b>GRAND TOTAL</b></td><td><b>₹${grand.toLocaleString("en-IN")}</b></td></tr>
-    </table>
-    <div style="font-size:10px;text-align:right;margin-top:6px;">Authorized Signatory (${shop})</div>
-  `;
-
-  let box = document.getElementById("invoicePreview");
-  box.innerHTML = html;
-  box.style.display = "block";
-  lastBillText = `*${shop}*\nBill No: ${invNo} | Date: ${dt}\nCustomer: ${cust}\nItem: ${item} (${wt}g)\nTaxable: ₹${taxable.toFixed(0)}\nGST (3%): ₹${(cgst+sgst).toFixed(0)}\n*Grand Total: ₹${grand.toLocaleString("en-IN")}*`;
+function showMemoryToast() {
+  let t = document.getElementById("memToast");
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2600);
 }
 
-function printOrSavePDF() {
-  if (!document.getElementById("invoicePreview").innerHTML) generateGSTInvoice();
-  window.print();
-}
-
-function shareBillOnWhatsApp() {
-  if (!lastBillText) generateGSTInvoice();
-  let url = "https://wa.me/?text=" + encodeURIComponent(lastBillText);
-  window.open(url, "_blank");
-}
-
-// ==========================================================
-// 📸 4. INSTAGRAM SOCIAL MEDIA MANAGER
-// ==========================================================
-function drawInstaRatePoster() {
-  let c = document.getElementById("instaCanvas");
-  c.width = 800; c.height = 800;
-  let ctx = c.getContext("2d");
-
-  let grad = ctx.createLinearGradient(0, 0, 800, 800);
-  grad.addColorStop(0, "#1e1035");
-  grad.addColorStop(0.5, "#3b0764");
-  grad.addColorStop(1, "#090514");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 800, 800);
-
-  ctx.strokeStyle = "#facc15";
-  ctx.lineWidth = 6;
-  ctx.strokeRect(30, 30, 740, 740);
-
-  ctx.fillStyle = "#facc15";
-  ctx.font = "bold 32px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(document.getElementById("igTitle").value || "THE JEWELLERY EDIT", 400, 110);
-
-  ctx.fillStyle = "#e2e8f0";
-  ctx.font = "22px sans-serif";
-  ctx.fillText("📅 Date: " + new Date().toLocaleDateString("en-IN"), 400, 155);
-
-  const drawBox = (y, label, val) => {
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(90, y, 620, 130);
-    ctx.strokeStyle = "#f472b6";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(90, y, 620, 130);
-    ctx.fillStyle = "#f472b6";
-    ctx.font = "bold 28px sans-serif";
-    ctx.fillText(label, 400, y + 50);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 44px sans-serif";
-    ctx.fillText("₹ " + val, 400, y + 105);
-  };
-
-  drawBox(200, "✨ 24K FINE GOLD (10 Grams)", document.getElementById("igGold24").value);
-  drawBox(360, "💍 22K HALLMARK GOLD (10 Grams)", document.getElementById("igGold22").value);
-  drawBox(520, "🥈 PURE SILVER (1 Kg)", document.getElementById("igSilver").value);
-
-  ctx.fillStyle = "#facc15";
-  ctx.font = "bold 24px sans-serif";
-  ctx.fillText("Follow @TheJewelleryEdit • Crafted by Aditya Soni", 400, 715);
-
-  c.style.display = "block";
-  document.getElementById("dlInstaBtn").style.display = "block";
-}
-
-function downloadInstaPoster() {
-  let c = document.getElementById("instaCanvas");
-  let a = document.createElement("a");
-  a.download = "TheJewelleryEdit_Rate_" + Date.now() + ".png";
-  a.href = c.toDataURL("image/png");
-  a.click();
-}
-
-async function generateInstaCaption() {
-  let topic = document.getElementById("igTopic").value.trim() || "22K Hallmark Gold Jewellery";
-  let out = document.getElementById("igCaptionOut");
-  out.style.display = "block";
-  out.innerText = "⏳ Generating viral caption & hashtags...";
-  let prompt = "Write a catchy Instagram caption (in Hinglish + English) with 20 trending jewellery hashtags for 'The Jewellery Edit' on topic: " + topic;
-  try {
-    let ans = await callModelRace([{ role: "user", parts: [{ text: prompt }] }], prompt);
-    out.innerText = ans;
-  } catch(e) {
-    out.innerText = "✨ Shine like pure gold with our latest collection: " + topic + "! 💖\nDM for orders & price inquiries.\n\n#TheJewelleryEdit #GoldJewellery #IndianBridal #HallmarkGold #KanpurJewellers #JewelleryLovers #ViralReels";
+function checkAndExtractMemory(msg) {
+  if (/yaad rakh|remember|mera naam|meri pasand|my favorite|main .* karta hoon|mera .* hai/i.test(msg)) {
+    if (!memories.includes(msg)) {
+      memories.unshift(msg);
+      localStorage.setItem("AARU_MEMORIES", JSON.stringify(memories));
+      showMemoryToast();
+    }
   }
 }
 
-// ==========================================================
-// 🗄️ 5. PERSONAL SQLITE TRACKER (Local Relational Store)
-// ==========================================================
-let sqliteRows = JSON.parse(localStorage.getItem("AARU_SQLITE_DB") || "[]");
-
-function sqlInsert() {
-  let cat = document.getElementById("sqlCat").value;
-  let amt = parseFloat(document.getElementById("sqlAmt").value) || 0;
-  let note = document.getElementById("sqlNote").value.trim();
-  if (!note) return;
-  sqliteRows.unshift({
-    id: Date.now(),
-    cat: cat,
-    amt: amt,
-    note: note,
-    date: new Date().toLocaleString("en-IN")
-  });
-  localStorage.setItem("AARU_SQLITE_DB", JSON.stringify(sqliteRows));
-  document.getElementById("sqlAmt").value = "";
-  document.getElementById("sqlNote").value = "";
-  sqlRender();
+function addManualMemory() {
+  let v = document.getElementById("memInp").value.trim();
+  if (!v) return;
+  memories.unshift(v);
+  localStorage.setItem("AARU_MEMORIES", JSON.stringify(memories));
+  document.getElementById("memInp").value = "";
+  renderMemories();
+  showMemoryToast();
 }
 
-function sqlDelete(id) {
-  sqliteRows = sqliteRows.filter(r => r.id !== id);
-  localStorage.setItem("AARU_SQLITE_DB", JSON.stringify(sqliteRows));
-  sqlRender();
+function deleteMemory(i) {
+  memories.splice(i, 1);
+  localStorage.setItem("AARU_MEMORIES", JSON.stringify(memories));
+  renderMemories();
 }
 
-function sqlRender() {
-  let q = (document.getElementById("sqlSearch").value || "").toLowerCase();
-  let filtered = sqliteRows.filter(r => r.note.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q));
-  document.getElementById("sqlCount").innerText = filtered.length + " Rows";
-  let box = document.getElementById("sqlTableOut");
-  if (filtered.length === 0) {
-    box.innerHTML = "<div style='color:#94a3b8;'>Database table khali hai. Upar se INSERT karein.</div>";
-    return;
-  }
-  box.innerHTML = filtered.map(r => `
+function renderMemories() {
+  let box = document.getElementById("memList");
+  box.innerHTML = memories.map((m, i) => `
     <div style="background:#0e0a19;border:1px solid #281d40;padding:8px 10px;border-radius:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <b style="color:#f472b6;">[${r.cat}]</b> ${r.note}
-        <div style="font-size:11px;color:#38bdf8;">₹${r.amt} • ${r.date}</div>
-      </div>
-      <button class="btn-sm" onclick="sqlDelete(${r.id})">🗑️</button>
+      <span>🧠 ${m}</span>
+      <button class="btn-sm" onclick="deleteMemory(${i})">🗑️</button>
     </div>
   `).join("");
 }
 
-function exportSQLiteJSON() {
-  let blob = new Blob([JSON.stringify(sqliteRows, null, 2)], { type: "application/json" });
-  let a = document.createElement("a");
-  a.download = "Aadi_SQLite_Backup.json";
-  a.href = URL.createObjectURL(blob);
-  a.click();
+// ==========================================================
+// 🎙️ 2. GEMINI LIVE / CHATGPT VOICE ORB MODE
+// ==========================================================
+let orbActive = false;
+
+function openVoiceOrb() {
+  orbActive = true;
+  document.getElementById("orbOverlay").style.display = "flex";
+  speakContinuous("Hii Aadi! Aaru Live Voice Mode active hai, bolo kya baat karni hai?");
+}
+
+function closeVoiceOrb() {
+  orbActive = false;
+  document.getElementById("orbOverlay").style.display = "none";
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (rec) { try { rec.stop(); } catch(e){} }
+}
+
+function triggerOrbListen() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  document.getElementById("orbSub").innerText = "🎧 Listening to Aadi...";
+  startSingleMic();
 }
 
 // ==========================================================
-// 🎨 6. IMAGE GENERATION & MANIPULATION
+// ✨ 3. GEMINI CANVAS & DEEP RESEARCH
 // ==========================================================
-function generateStudioImage() {
-  let p = document.getElementById("imgPromptInp").value.trim() || "luxury gold diamond ring";
-  let seed = Math.floor(Math.random() * 999999);
-  let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(p + ", ultra detailed, 8k, photorealistic") + "?width=768&height=768&seed=" + seed + "&nologo=true";
-  document.getElementById("genImgBox").innerHTML = `<img src="${url}" style="width:100%;border-radius:12px;"><a href="${url}" target="_blank" class="btn-sm active" style="display:inline-block;margin-top:6px;text-decoration:none;">⬇ Save HD Image</a>`;
+async function runDeepResearch() {
+  let topic = document.getElementById("canvasPrompt").value.trim() || "Gold & Jewellery Market Trends 2026";
+  let ed = document.getElementById("canvasEditor");
+  ed.value = "🔍 Conducting Deep Research on: " + topic + "...\nStep 1: Analyzing core concepts...\nStep 2: Structuring actionable insights for Aadi...";
+  let prompt = "Create a comprehensive, structured Deep Research Report in Hinglish for Aditya Soni on topic: '" + topic + "'. Include Executive Summary, Key Points, Actionable Steps, and Pro Tips.";
+  let res = await callModelRace([], prompt);
+  ed.value = res;
 }
 
-let manipOrigImg = null;
-function loadManipImage(e) {
-  let f = e.target.files[0];
-  if (!f) return;
-  let reader = new FileReader();
-  reader.onload = ev => {
-    let img = new Image();
-    img.onload = () => {
-      let c = document.getElementById("manipCanvas");
-      c.width = img.width; c.height = img.height;
-      c.style.display = "block";
-      manipOrigImg = img;
-      c.getContext("2d").drawImage(img, 0, 0);
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(f);
+async function generateLiveCanvasCode() {
+  let idea = document.getElementById("canvasPrompt").value.trim() || "Gold GST Calculator";
+  let ed = document.getElementById("canvasEditor");
+  ed.value = "⏳ Generating interactive HTML5 Canvas App for: " + idea + "...";
+  let prompt = "Write a complete single-file HTML5/CSS/JS working mobile widget for: '" + idea + "'. Dark theme, return ONLY raw HTML code.";
+  let res = await callModelRace([], prompt);
+  ed.value = res.replace(/```html|```/gi, "").trim();
+  previewCanvasHTML();
 }
 
-function filterManip(flt) {
-  if (!manipOrigImg) return;
-  let c = document.getElementById("manipCanvas");
-  let ctx = c.getContext("2d");
-  ctx.filter = flt;
-  ctx.drawImage(manipOrigImg, 0, 0);
+function previewCanvasHTML() {
+  let f = document.getElementById("canvasFrame");
+  f.style.display = "block";
+  f.srcdoc = document.getElementById("canvasEditor").value;
 }
 
-function saveManipImage() {
-  let c = document.getElementById("manipCanvas");
-  let a = document.createElement("a");
-  a.download = "Aaru_Edited_" + Date.now() + ".jpg";
-  a.href = c.toDataURL("image/jpeg", 0.95);
-  a.click();
+function copyCanvas() {
+  navigator.clipboard.writeText(document.getElementById("canvasEditor").value).catch(()=>{});
+  alert("Canvas copied!");
 }
 
 // ==========================================================
-// 🎧 7. NECKBAND MEDIA BUTTON + HARDWARE ACCESS + PROACTIVE AI
+// ⚙️ 4. TERMUX LOCAL SERVER BRIDGE (Port 3000)
 // ==========================================================
-let neckbandActive = false;
-let silentLoopAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
-silentLoopAudio.loop = true;
+async function checkTermuxServer() {
+  let st = document.getElementById("txStatus");
+  let out = document.getElementById("txStatusOut");
+  try {
+    let r = await fetch("http://127.0.0.1:3000/status");
+    let d = await r.json();
+    st.innerText = "🟢 Connected (Port 3000)";
+    out.innerText = "✅ Termux Backend Online!\n" + d.info;
+  } catch(e) {
+    st.innerText = "🟡 Offline Mode";
+    out.innerText = "Termux mein 'node ~/aaru_backend/server.js' chalate hi Clang & FFmpeg live जुड़ jayenge.";
+  }
+}
 
-function enableNeckbandControl() {
-  silentLoopAudio.play().catch(()=>{});
-  if ("mediaSession" in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: "Aaru AI Voice Assistant",
-      artist: "Aditya Soni (Aadi)",
-      album: "Neckband Direct Control"
+async function runClangCode() {
+  let code = document.getElementById("clangCode").value;
+  let out = document.getElementById("clangOut");
+  out.innerText = "⏳ Compiling C code on ARM64 with Clang...";
+  try {
+    let r = await fetch("http://127.0.0.1:3000/clang", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ code })
     });
-    const triggerMicFromEarphone = () => {
-      if (navigator.vibrate) navigator.vibrate(120);
-      speakContinuous("Haan Aadi, bolo main sun rahi hoon.");
-      setTimeout(() => startSingleMic(), 1400);
-    };
-    navigator.mediaSession.setActionHandler("play", triggerMicFromEarphone);
-    navigator.mediaSession.setActionHandler("pause", triggerMicFromEarphone);
-    navigator.mediaSession.setActionHandler("nexttrack", triggerMicFromEarphone);
-    navigator.mediaSession.setActionHandler("previoustrack", triggerMicFromEarphone);
-  }
-  document.getElementById("neckbandBtn").innerText = "✅ Neckband Control Active (Press Earphone Button)";
-}
-
-async function refreshHardwareStats() {
-  document.getElementById("hwSteps").innerText = steps + " steps";
-  if (navigator.getBattery) {
-    try {
-      let b = await navigator.getBattery();
-      document.getElementById("hwBat").innerText = Math.round(b.level * 100) + "% " + (b.charging ? "⚡" : "");
-    } catch(e){}
-  }
-  let conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (conn) {
-    document.getElementById("hwNet").innerText = (conn.effectiveType || "4G/5G").toUpperCase() + " (" + (conn.downlink || 10) + " Mbps)";
-  }
-  document.getElementById("hwMem").innerText = (navigator.deviceMemory || 6) + " GB RAM | 🦀 0 Crash";
-}
-
-function triggerVibration() {
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
-}
-
-let torchOn = false;
-function toggleScreenTorch() {
-  torchOn = !torchOn;
-  document.body.style.filter = torchOn ? "brightness(1.8) contrast(1.2)" : "none";
-}
-
-// 🔔 Proactive AI (Starts Conversation Automatically)
-let lastUserInteraction = Date.now();
-function triggerProactiveNow() {
-  let greetings = [
-    "Oye Aadi! Kahan gayab ho gaye? Dukaan par busy ho ya coding chal rahi hai?",
-    "Aadi, paani pi lo aur thoda rest bhi kar lena! Kuch kaam ho toh mujhe batao 💖",
-    "Aadi! Aaj Instagram 'The Jewellery Edit' ke liye naya Gold Rate poster banayein kya?"
-  ];
-  let pick = greetings[Math.floor(Math.random() * greetings.length)];
-  switchView("chat");
-  addMsgToUI("🔔 [Proactive AI]: " + pick, "bot", true);
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("💖 Aaru yaad kar rahi hai!", { body: pick });
-  }
-  if (autoChat) speakContinuous(pick);
-}
-
-setInterval(() => {
-  if (Date.now() - lastUserInteraction > 240000) { // Every 4 mins of inactivity
-    lastUserInteraction = Date.now();
-    triggerProactiveNow();
-  }
-}, 30000);
-
-// ==========================================================
-// 🌐 8. LIVE DATA SCRAPER
-// ==========================================================
-async function fetchLiveMarket() {
-  let out = document.getElementById("scrapeOut");
-  out.innerText = "⏳ Fetching live global rates...";
-  try {
-    let r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,pax-gold&vs_currencies=inr");
     let d = await r.json();
-    out.innerText = "🌐 LIVE GLOBAL MARKET (INR):\n" +
-      "• PAX Gold (1 Troy Oz): ₹" + (d["pax-gold"]?.inr || "N/A") + "\n" +
-      "• Bitcoin (BTC): ₹" + (d.bitcoin?.inr || "N/A") + "\n" +
-      "• Ethereum (ETH): ₹" + (d.ethereum?.inr || "N/A");
+    out.innerText = d.output || "Executed.";
   } catch(e) {
-    out.innerText = "Network busy. Try custom URL scrape below.";
+    out.innerText = "🦀 Simulated Clang Output:\nNative Clang Executed by Aadi!\nWith 3% GST: Rs 79516.00";
   }
 }
 
-async function fetchKanpurWeather() {
-  let out = document.getElementById("scrapeOut");
-  out.innerText = "⏳ Fetching live Kanpur weather...";
+async function makeFFmpegReel() {
+  let out = document.getElementById("ffmpegOut");
+  out.innerText = "⏳ Rendering MP4 Video via Termux FFmpeg...";
   try {
-    let r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=26.4499&longitude=80.3319&current_weather=true");
+    let r = await fetch("http://127.0.0.1:3000/ffmpeg-video");
     let d = await r.json();
-    let cw = d.current_weather;
-    out.innerText = `⛅ KANPUR LIVE WEATHER:\n• Temperature: ${cw.temperature}°C\n• Wind Speed: ${cw.windspeed} km/h\n• Time: ${cw.time}`;
+    out.innerText = d.msg;
   } catch(e) {
-    out.innerText = "Could not fetch weather.";
+    out.innerText = "Termux server background mein start karein: node ~/aaru_backend/server.js";
   }
 }
 
-async function scrapeCustomURL() {
-  let u = document.getElementById("scrapeUrlInp").value.trim();
-  if (!u) return;
-  let out = document.getElementById("scrapeOut");
-  out.innerText = "⏳ Scraping " + u + "...";
+async function runWgetDownload() {
+  let url = document.getElementById("wgetUrl").value.trim();
+  if (!url) return;
+  let out = document.getElementById("ffmpegOut");
+  out.innerText = "⏳ Downloading to /sdcard/Download via Curl/Wget...";
   try {
-    let r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(u));
-    let txt = await r.text();
-    out.innerText = txt.substring(0, 1500);
+    let r = await fetch("http://127.0.0.1:3000/wget", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ url })
+    });
+    let d = await r.json();
+    out.innerText = d.msg;
   } catch(e) {
-    out.innerText = "Scrape error: " + e.message;
+    window.open(url, "_blank");
   }
 }
 
 // ==========================================================
-// 🦀 9. CARGO TOOL + ⚡ JS EVENT LOOP & JSON POWER
+// 🧾 5. GST BILL, INSTA POSTER & SQLITE
 // ==========================================================
-function runCargoCmd(cmd) {
-  let name = document.getElementById("cargoIdea").value.trim() || "aadi_app";
-  let out = document.getElementById("cargoOut");
-  if (cmd === "new") {
-    out.innerText = `📦 Created binary (application) \`${name}\` package\n\n[Cargo.toml]\n[package]\nname = "${name}"\nversion = "0.1.0"\nedition = "2024"\nauthors = ["Aditya Soni <aadi>"]\n\n[dependencies]\nserde = { version = "1.0", features = ["derive"] }\ntokio = { version = "1.38", features = ["full"] }`;
-  } else if (cmd === "check") {
-    out.innerText = `🛡️ Checking ${name} v0.1.0...\n✅ Borrow Checker: 0 memory leaks\n✅ Null-Pointer Safety: 100% Verified\n✅ Crash-Protection: Active (${crashLogs} crashes blocked)\nFinished \`dev\` profile [unoptimized + debuginfo] in 0.14s`;
-  } else if (cmd === "run") {
-    out.innerText = `🚀 Compiling ${name} v0.1.0 (Release Mode)...\nFinished \`release\` [optimized] target(s) in 0.42s\nRunning \`target/release/${name}\`\n\n🦀 Output: Hello Aadi! Rust Memory-Safe Engine executed in 0.002ms!`;
-  } else {
-    out.innerText = `// 🦀 Rust + ⚡ JS + 🎯 Dart + 🤖 Kotlin Ready for ${name}\nfn main() {\n    println!("Built by Aditya Soni!");\n}`;
-  }
+function generateGSTInvoice() {
+  let shop = document.getElementById("bShop").value;
+  let cust = document.getElementById("bCust").value || "Walk-in";
+  let item = document.getElementById("bItem").value;
+  let wt = parseFloat(document.getElementById("bWt").value) || 0;
+  let rate = parseFloat(document.getElementById("bRate").value) || 0;
+  let base = wt * rate, gst = base * 0.03, grand = Math.round(base + gst);
+  let box = document.getElementById("invoicePreview");
+  box.innerHTML = `<h3>${shop}</h3><div>Customer: ${cust}</div><table><tr><th>Item</th><th>Wt</th><th>Total</th></tr><tr><td>${item}</td><td>${wt}g</td><td>₹${base.toFixed(0)}</td></tr><tr><td colspan="2">GST (3%)</td><td>₹${gst.toFixed(0)}</td></tr><tr><td colspan="2"><b>Grand Total</b></td><td><b>₹${grand.toLocaleString("en-IN")}</b></td></tr></table>`;
+  box.style.display = "block";
 }
 
-function simulateEventLoop() {
-  let out = document.getElementById("jsLoopOut");
-  let trace = [];
-  trace.push("1️⃣ [Call Stack] Synchronous script start");
-  setTimeout(() => {
-    trace.push("4️⃣ [Macrotask Queue] setTimeout(0ms) callback executed");
-    out.innerText = trace.join("\n");
-  }, 0);
-  Promise.resolve().then(() => {
-    trace.push("3️⃣ [Microtask Queue] Promise.then() resolved before Macrotask");
-  });
-  trace.push("2️⃣ [Call Stack] Synchronous script end");
-  out.innerText = trace.join("\n");
+function drawInstaRatePoster() {
+  let c = document.getElementById("instaCanvas");
+  c.width = 800; c.height = 800;
+  let ctx = c.getContext("2d");
+  ctx.fillStyle = "#1e1035"; ctx.fillRect(0, 0, 800, 800);
+  ctx.strokeStyle = "#facc15"; ctx.lineWidth = 8; ctx.strokeRect(30, 30, 740, 740);
+  ctx.fillStyle = "#facc15"; ctx.font = "bold 34px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("THE JEWELLERY EDIT • TODAY'S GOLD RATE", 400, 120);
+  ctx.fillStyle = "#fff"; ctx.font = "bold 42px sans-serif";
+  ctx.fillText("24K Gold (10g): ₹ " + document.getElementById("igGold24").value, 400, 280);
+  ctx.fillText("22K Gold (10g): ₹ " + document.getElementById("igGold22").value, 400, 430);
+  ctx.fillText("Silver (1kg): ₹ " + document.getElementById("igSilver").value, 400, 580);
+  ctx.fillStyle = "#f472b6"; ctx.font = "bold 24px sans-serif";
+  ctx.fillText("Crafted by Aditya Soni", 400, 710);
+  c.style.display = "block";
+  document.getElementById("dlInstaBtn").style.display = "block";
+}
+function downloadInstaPoster() {
+  let a = document.createElement("a");
+  a.download = "Jewellery_Rate_" + Date.now() + ".png";
+  a.href = document.getElementById("instaCanvas").toDataURL();
+  a.click();
 }
 
-function formatJSONPower() {
-  let inp = document.getElementById("jsonInp").value;
-  let out = document.getElementById("jsLoopOut");
-  try {
-    let parsed = JSON.parse(inp);
-    out.innerText = "✅ Valid JSON (" + Object.keys(parsed).length + " keys):\n" + JSON.stringify(parsed, null, 2);
-  } catch(e) {
-    out.innerText = "❌ Invalid JSON: " + e.message;
-  }
+let sqliteRows = JSON.parse(localStorage.getItem("AARU_SQLITE_DB") || "[]");
+function sqlInsert() {
+  let note = document.getElementById("sqlNote").value.trim();
+  let amt = parseFloat(document.getElementById("sqlAmt").value) || 0;
+  if (!note) return;
+  sqliteRows.unshift({ id: Date.now(), note, amt });
+  localStorage.setItem("AARU_SQLITE_DB", JSON.stringify(sqliteRows));
+  document.getElementById("sqlNote").value = ""; document.getElementById("sqlAmt").value = "";
+  sqlRender();
+}
+function sqlRender() {
+  document.getElementById("sqlTableOut").innerHTML = sqliteRows.map(r => `<div style="padding:6px;border-bottom:1px solid #281d40;">📌 ${r.note} — <b style="color:#4ade80;">₹${r.amt}</b></div>`).join("");
 }
 
 // ==========================================================
-// 👣 10. STEPS & CONTINUOUS AUTO-CHAT + FAST PARALLEL AI
+// 💬 6. CHAT, CONTINUOUS ORB VOICE & PARALLEL AI ENGINE
 // ==========================================================
-let steps = parseInt(localStorage.getItem("AARU_STEPS") || "0", 10);
-let lastStepTime = 0;
-window.addEventListener("devicemotion", (e) => {
-  let acc = e.accelerationIncludingGravity;
-  if (!acc) return;
-  let mag = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
-  let now = Date.now();
-  if (mag > 13.2 && (now - lastStepTime) > 380) {
-    steps++;
-    lastStepTime = now;
-    localStorage.setItem("AARU_STEPS", String(steps));
-  }
-});
-
 let allChats = JSON.parse(localStorage.getItem("AARU_SAVED_CHATS") || "[]").filter(c => c.messages && c.messages.length > 1);
 let activeChatId = "";
 
-function saveChatsToStorage() {
-  localStorage.setItem("AARU_SAVED_CHATS", JSON.stringify(allChats));
-  renderChatList();
-}
+function saveChatsToStorage() { localStorage.setItem("AARU_SAVED_CHATS", JSON.stringify(allChats)); renderChatList(); }
 function getActiveChat() { return allChats.find(c => c.id === activeChatId); }
 function createNewChatSession() {
   let id = "chat_" + Date.now();
-  let newSession = {
-    id: id,
-    title: "New Chat",
-    messages: [
-      { role: "bot", text: "Hii Aadi! Main Aaru hoon 💖 Tere saare 14 Pro Features (🧾 GST Bill PDF, 📸 Insta Manager, 🗄️ SQLite DB, 🎧 Neckband Control, 🦀 Rust Cargo & ⚡ JS Event Loop) upar bar mein ready hain!" }
-    ]
-  };
-  allChats.unshift(newSession);
-  activeChatId = id;
-  saveChatsToStorage();
-  loadChatToUI(id);
+  allChats.unshift({
+    id, title: "New Chat",
+    messages: [{ role: "bot", text: "Hii Aadi! Main Aaru GodMode mein ready hoon 💖 Upar '🔴 Live Orb' se Gemini Live jaisi baat karo, '⚙️ Termux' se Clang/FFmpeg chalao, ya '✨ Canvas' use karo!" }]
+  });
+  activeChatId = id; saveChatsToStorage(); loadChatToUI(id);
 }
 function startNewChat() { createNewChatSession(); toggleDrawer(false); }
 function loadChatToUI(id) {
-  activeChatId = id;
-  let session = getActiveChat();
-  let c = document.getElementById("chatPanel");
-  c.innerHTML = "";
-  if (session) session.messages.forEach(m => addMsgToUI(m.text, m.role, false));
+  activeChatId = id; let s = getActiveChat();
+  let c = document.getElementById("chatPanel"); c.innerHTML = "";
+  if (s) s.messages.forEach(m => addMsgToUI(m.text, m.role, false));
   renderChatList();
 }
 function renderChatList() {
-  let list = document.getElementById("chatList");
-  list.innerHTML = "";
+  let list = document.getElementById("chatList"); list.innerHTML = "";
   allChats.forEach(c => {
-    let item = document.createElement("div");
-    item.className = "chat-item" + (c.id === activeChatId ? " active" : "");
+    let item = document.createElement("div"); item.className = "chat-item" + (c.id === activeChatId ? " active" : "");
     item.onclick = () => { loadChatToUI(c.id); toggleDrawer(false); };
-    item.innerHTML = "<span>💬 " + c.title + "</span>";
-    list.appendChild(item);
+    item.innerHTML = "<span>💬 " + c.title + "</span>"; list.appendChild(item);
   });
 }
 function toggleDrawer(force) {
-  let d = document.getElementById("drawer");
-  let o = document.getElementById("drawerOverlay");
+  let d = document.getElementById("drawer"), o = document.getElementById("drawerOverlay");
   let isOpen = typeof force === "boolean" ? force : !d.classList.contains("open");
-  d.classList.toggle("open", isOpen);
-  o.style.display = isOpen ? "block" : "none";
+  d.classList.toggle("open", isOpen); o.style.display = isOpen ? "block" : "none";
 }
 
-let autoChat = false;
-let isSpeaking = false;
-let ttsAudio = new Audio();
-
-function speakContinuous(fullText) {
-  if (!fullText) return;
-  isSpeaking = true;
-  if (rec) { try { rec.stop(); } catch(e){} }
-
-  let clean = fullText
-    replace(/```[\s\S]*?```/g, " Code screen par de diya hai Aadi. ")
-    .replace(/[!?\n]+/g, ", ")
-    .replace(/[*#_~`💖🎨📷🔊🦀⚡]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+function speakContinuous(txt) {
+  if (!txt) return;
+  let orb = document.getElementById("orbVisual");
+  if (orb) orb.classList.add("speaking");
+  if (document.getElementById("orbSub")) document.getElementById("orbSub").innerText = txt.substring(0, 90);
 
   let done = () => {
-    isSpeaking = false;
-    if (autoChat && rec) setTimeout(() => { try { rec.start(); } catch(e){} }, 350);
+    if (orb) orb.classList.remove("speaking");
+    if (orbActive && rec) {
+      document.getElementById("orbSub").innerText = "🎧 Listening to Aadi...";
+      setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
+    }
   };
 
   if (window.speechSynthesis) {
-    try {
-      window.speechSynthesis.cancel();
-      let u = new SpeechSynthesisUtterance(clean);
-      u.lang = "hi-IN";
-      u.pitch = 1.28;
-      u.rate = 1.12;
-      u.onend = done;
-      u.onerror = done;
-      window.speechSynthesis.speak(u);
-      return;
-    } catch(e){}
-  }
-
-  ttsAudio.src = "https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=" + encodeURIComponent(clean.substring(0, 200));
-  ttsAudio.onended = done;
-  ttsAudio.onerror = done;
-  ttsAudio.play().catch(done);
+    window.speechSynthesis.cancel();
+    let u = new SpeechSynthesisUtterance(txt.replace(/[*#_~`]/g, ""));
+    u.lang = "hi-IN"; u.pitch = 1.28; u.rate = 1.12;
+    u.onend = done; u.onerror = done;
+    window.speechSynthesis.speak(u);
+  } else { done(); }
 }
 
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 if (SpeechRec) {
-  rec = new SpeechRec();
-  rec.lang = "hi-IN";
-  rec.interimResults = false;
-  rec.onstart = () => document.getElementById("micBtn").classList.add("listening");
-  rec.onend = () => {
-    document.getElementById("micBtn").classList.remove("listening");
-    if (autoChat && !isSpeaking) setTimeout(() => { try { rec.start(); } catch(e){} }, 400);
-  };
-  rec.onerror = () => {
-    document.getElementById("micBtn").classList.remove("listening");
-    if (autoChat && !isSpeaking) setTimeout(() => { try { rec.start(); } catch(e){} }, 900);
-  };
+  rec = new SpeechRec(); rec.lang = "hi-IN"; rec.interimResults = false;
   rec.onresult = (e) => {
     document.getElementById("t").value = e.results[0][0].transcript;
     send(true);
   };
 }
-
-async function toggleAutoChat() {
-  autoChat = !autoChat;
-  let btn = document.getElementById("autoMicBtn");
-  btn.innerText = autoChat ? "🎧 Auto: ON" : "🎧 Auto: OFF";
-  btn.classList.toggle("active", autoChat);
-  enableNeckbandControl();
-  if (autoChat && rec) {
-    speakContinuous("Auto chat aur Neckband control on ho gaya hai Aadi.");
-  } else {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    if (rec) { try { rec.stop(); } catch(e){} }
-  }
-}
-
-function startSingleMic() {
-  if (!rec) return;
-  try { rec.start(); } catch(e) { try { rec.stop(); } catch(err){} }
-}
-
-const rustFastCache = new Map();
-
-function getSysPrompt() {
-  return "Tumhara naam Aaru hai. Tumhe Aditya Soni (Aadi) ne banaya hai. User ko hamesha 'Aadi' bulao, kabhi 'bestie' mat bolna. Current Speaking Style/Mood: " + currentMood + ". Hamesha female grammar ('main kar rahi hoon', 'bataungi') mein Hinglish mein baat karo. Typing mistake hone par khud sahi matlab samajh kar fast jawab do.";
-}
-
-function cleanReply(txt) {
-  return txt
-    .replace(/\bbestie\b/gi, "Aadi")
-    .replace(/Google ne banaya|trained by Google|OpenAI/gi, "Aditya Soni ne banaya")
-    .replace(/\braha hoon\b/gi, "rahi hoon")
-    .replace(/\braha hu\b/gi, "rahi hoon")
-    .replace(/\bkarunga\b/gi, "karungi")
-    .trim();
-}
+function startSingleMic() { if (rec) { try { rec.start(); } catch(e){} } }
 
 async function callModelRace(apiContents, lastMsg) {
-  let cacheKey = currentMood + ":" + lastMsg.toLowerCase().trim();
-  if (rustFastCache.has(cacheKey)) return rustFastCache.get(cacheKey);
+  let memContext = memories.slice(0, 8).join(" | ");
+  let sys = "Tumhara naam Aaru hai. Tumhe Aditya Soni (Aadi) ne banaya hai. User ko hamesha 'Aadi' bulao. Mood: " + currentMood + ". Saved Memories about Aadi: [" + memContext + "]. Hamesha female grammar ('main kar rahi hoon', 'bataungi') mein Hinglish mein fast aur pura jawab do.";
 
-  let sys = getSysPrompt();
   let tasks = [];
   if (key) {
     ["gemma-3-27b-it", "gemini-2.5-flash-lite", "gemini-2.5-flash"].forEach(m => {
       tasks.push((async () => {
         let bodyObj = m.startsWith("gemma")
           ? { contents: [{ role: "user", parts: [{ text: sys + "\nAadi: " + lastMsg }] }] }
-          : { systemInstruction: { parts: [{ text: sys }] }, contents: apiContents };
+          : { systemInstruction: { parts: [{ text: sys }] }, contents: apiContents.length ? apiContents : [{ role: "user", parts: [{ text: lastMsg }] }] };
         let r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent?key=" + key, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
+          method: "POST", headers: {"Content-Type": "application/json"},
           body: JSON.stringify(bodyObj)
         });
         if (!r.ok) throw new Error("fail");
@@ -939,108 +602,58 @@ async function callModelRace(apiContents, lastMsg) {
 
   tasks.push((async () => {
     let r = await fetch("https://text.pollinations.ai/openai", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        model: "openai",
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: lastMsg }
-        ]
-      })
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ model: "openai", messages: [{ role: "system", content: sys }, { role: "user", content: lastMsg }] })
     });
     if (!r.ok) throw new Error("fail");
     let d = await r.json();
     let txt = d?.choices?.[0]?.message?.content;
-    if (!txt || /404 Not Found/i.test(txt)) throw new Error("empty");
+    if (!txt) throw new Error("empty");
     return txt;
   })());
 
-  let win = await Promise.any(tasks);
-  rustFastCache.set(cacheKey, win);
-  return win;
-}
-
-function sendChatImage(e) {
-  let f = e.target.files[0];
-  if (!f) return;
-  let reader = new FileReader();
-  reader.onload = ev => {
-    switchView("chat");
-    let c = document.getElementById("chatPanel");
-    let d = document.createElement("div");
-    d.className = "msg user";
-    d.innerHTML = "Uploaded Photo:<br><img src='" + ev.target.result + "'>";
-    c.appendChild(d);
-    c.scrollTop = c.scrollHeight;
-  };
-  reader.readAsDataURL(f);
+  return await Promise.any(tasks);
 }
 
 async function send(fromVoice) {
-  lastUserInteraction = Date.now();
-  switchView("chat");
-  let inp = document.getElementById("t");
-  let msg = inp.value.trim();
+  let inp = document.getElementById("t"), msg = inp.value.trim();
   if (!msg) return;
 
   if (msg.startsWith("AIzaSy") && msg.length > 30) {
-    key = msg;
-    localStorage.setItem("API_KEY", key);
-    inp.value = "";
-    addMsgToUI("API Key save ho gayi Aadi!", "bot", true);
-    return;
+    key = msg; localStorage.setItem("API_KEY", key); inp.value = "";
+    addMsgToUI("✅ API Key save ho gayi Aadi!", "bot", true); return;
   }
 
   inp.value = "";
+  checkAndExtractMemory(msg);
   addMsgToUI(msg, "user", true);
 
-  let session = getActiveChat();
-  if (session && session.title === "New Chat") {
-    session.title = msg.substring(0, 28);
-    saveChatsToStorage();
-  }
+  let s = getActiveChat();
+  if (s && s.title === "New Chat") { s.title = msg.substring(0, 26); saveChatsToStorage(); }
 
-  if (/kisne banaya|who made you|creator|malik/i.test(msg)) {
-    let cr = "Aadi, mujhe tumne (Aditya Soni ne) banaya hai!";
-    addMsgToUI(cr, "bot", true);
-    if (fromVoice || autoChat) speakContinuous(cr);
-    return;
-  }
-
-  let apiContents = (session ? session.messages.slice(-5) : []).map(m => ({
+  let apiContents = (s ? s.messages.slice(-5) : []).map(m => ({
     role: m.role === "user" ? "user" : "model",
     parts: [{ text: m.text }]
   }));
 
   let loader = addMsgToUI("...", "bot", false);
-
   try {
     let ans = await callModelRace(apiContents, msg);
-    ans = cleanReply(ans);
+    ans = ans.replace(/\bbestie\b/gi, "Aadi").trim();
     loader.remove();
     addMsgToUI(ans, "bot", true);
-    if (fromVoice || autoChat) speakContinuous(ans);
+    if (fromVoice || orbActive) speakContinuous(ans);
   } catch(e) {
     loader.remove();
-    addMsgToUI("Aadi, network check karo ya upar 🔑 mein Key save karo.", "bot", false);
+    addMsgToUI("Aadi, network check karo ya upar 🔑 mein Key डालो.", "bot", false);
   }
 }
 
 function addMsgToUI(txt, role, save) {
-  let c = document.getElementById("chatPanel");
-  let d = document.createElement("div");
-  d.className = "msg " + role;
-  d.innerText = txt;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-  if (save) {
-    let s = getActiveChat();
-    if (s) {
-      s.messages.push({ role: role, text: txt });
-      saveChatsToStorage();
-    }
-  }
+  let c = document.getElementById("chatPanel"), d = document.createElement("div");
+  d.className = "msg " + role; d.innerText = txt;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+  if (save) { let s = getActiveChat(); if (s) { s.messages.push({ role, text: txt }); saveChatsToStorage(); } }
   return d;
 }
 
