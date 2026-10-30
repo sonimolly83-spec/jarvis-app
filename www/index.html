@@ -3,487 +3,279 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AARU // HACKER OS V10</title>
+<title>AARU // SKULL MATRIX</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', monospace; -webkit-tap-highlight-color: transparent; }
-  body { background: #020603; color: #00ff41; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  #matrixCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.18; }
-  #hudBar { background: #010a02; color: #00f0ff; font-size: 10px; padding: 4px 8px; border-bottom: 1px solid #00ff41; letter-spacing: 1px; z-index: 5; white-space: nowrap; overflow: hidden; }
+  body { background: #010502; color: #00ff66; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #020d05; border-bottom: 1px solid #00ff66; font-size: 11px; }
+  .nav-btns { display: flex; gap: 5px; }
+  .h-btn { background: #031c0b; color: #00ff66; border: 1px solid #00ff66; padding: 4px 8px; font-size: 10.5px; font-weight: bold; cursor: pointer; }
+  .h-btn.active { background: #00ff66; color: #000; box-shadow: 0 0 10px #00ff66; }
+  .h-btn.red { border-color: #ff3333; color: #ff3333; background: #260303; }
 
-  header { padding: 8px 10px; background: rgba(1, 18, 5, 0.95); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #00ff41; box-shadow: 0 0 15px rgba(0,255,65,0.25); z-index: 5; }
-  .brand { font-size: 14px; font-weight: 900; color: #00ff41; text-shadow: 0 0 8px #00ff41; display: flex; align-items: center; gap: 6px; }
-  .top-btns { display: flex; gap: 5px; align-items: center; }
-  .btn-h { background: #031a08; color: #00ff41; border: 1px solid #00ff41; padding: 5px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; cursor: pointer; }
-  .btn-h.cyan { color: #00f0ff; border-color: #00f0ff; }
-  .btn-h.red { color: #ff3b3b; border-color: #ff3b3b; background: #260404; }
+  #hudScreen { flex: 1; display: grid; grid-template-columns: 62% 36%; grid-gap: 2%; padding: 6px; overflow-y: auto; }
+  .left-col, .right-col { display: flex; flex-direction: column; gap: 6px; }
+  .box { border: 1px solid #008f39; background: rgba(0, 18, 6, 0.82); padding: 6px; position: relative; box-shadow: inset 0 0 10px rgba(0,255,102,0.1); }
+  .box-title { font-size: 9.5px; color: #00ff66; border-bottom: 1px solid #004d1f; padding-bottom: 3px; margin-bottom: 4px; display: flex; justify-content: space-between; }
 
-  .dock { background: #020d04; padding: 6px 8px; display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #005c18; z-index: 5; }
-  .dock::-webkit-scrollbar { display: none; }
-  .tab { background: #041707; border: 1px solid #00ff41; color: #00ff41; padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: bold; cursor: pointer; }
-  .tab.active { background: #00ff41; color: #000; box-shadow: 0 0 12px #00ff41; }
+  .big-clock { font-size: 27px; font-weight: 900; text-align: center; color: #00ff66; text-shadow: 0 0 12px #00ff66; letter-spacing: 2px; padding: 3px 0; }
+  .loc-line { font-size: 9px; color: #80ffaa; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* SAVED CHATS DRAWER WITH DELETE BUTTONS */
-  #drawerBg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 900; display: none; }
-  #drawer { position: fixed; top: 0; left: -300px; width: 290px; height: 100vh; background: #030f05; border-right: 2px solid #00ff41; z-index: 950; display: flex; flex-direction: column; transition: left 0.22s ease; }
-  #drawer.open { left: 0; }
-  .dr-head { padding: 12px; border-bottom: 1px solid #00ff41; display: flex; justify-content: space-between; align-items: center; }
-  #chatList { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-  .c-item { padding: 8px; background: #061f0b; border: 1px solid #008f24; border-radius: 3px; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
-  .c-item.active { border-color: #00f0ff; box-shadow: 0 0 8px rgba(0,240,255,0.4); }
+  table.h-tbl { width: 100%; border-collapse: collapse; font-size: 8.5px; color: #00ff66; }
+  table.h-tbl th { color: #80ffaa; text-align: left; border-bottom: 1px solid #004d1f; padding: 2px; }
+  table.h-tbl td { padding: 2px; white-space: nowrap; }
 
-  /* PANELS */
-  .panel { display: none; flex: 1; overflow-y: auto; padding: 10px; z-index: 5; }
-  .panel.active { display: flex; flex-direction: column; gap: 10px; }
-  .card { background: rgba(2, 16, 6, 0.9); border: 1px solid #00ff41; border-radius: 4px; padding: 12px; box-shadow: inset 0 0 10px rgba(0,255,65,0.12); }
-  .card h3 { color: #00f0ff; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-  .inp { width: 100%; padding: 8px 10px; background: #010802; border: 1px solid #00ff41; color: #00ff41; border-radius: 3px; font-size: 12.5px; margin-bottom: 8px; outline: none; }
-  .act-btn { width: 100%; padding: 9px; background: linear-gradient(90deg, #003811, #008f24); border: 1px solid #00ff41; color: #00ff41; font-weight: 900; font-size: 12px; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-  pre.term { background: #010501; color: #00f0ff; border: 1px solid #005c18; padding: 8px; font-size: 11px; white-space: pre-wrap; max-height: 210px; overflow-y: auto; margin-top: 6px; }
+  .circles { display: flex; justify-content: space-around; padding: 4px 0; }
+  .c-gauge { width: 42px; height: 42px; border: 2px solid #00ff66; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 8.5px; box-shadow: 0 0 8px rgba(0,255,102,0.3); }
+  .bar-wrap { height: 5px; background: #02260e; border: 1px solid #00ff66; margin: 3px 0 5px; }
+  .bar-fill { height: 100%; background: #00ff66; box-shadow: 0 0 6px #00ff66; width: 80%; }
 
-  #chatBox { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
-  .msg { max-width: 90%; padding: 9px 12px; border-radius: 4px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
-  .msg.user { align-self: flex-end; background: #003811; border: 1px solid #00ff41; color: #00ff41; }
-  .msg.bot { align-self: flex-start; background: rgba(1, 20, 12, 0.92); border: 1px solid #00f0ff; color: #00f0ff; }
+  .radar-row { display: flex; align-items: center; gap: 8px; }
+  .sat-radar { width: 80px; height: 80px; border: 1.5px solid #00ff66; border-radius: 50%; position: relative; background: radial-gradient(circle, transparent 30%, rgba(0,255,102,0.2) 31%, transparent 33%), radial-gradient(circle, transparent 60%, rgba(0,255,102,0.2) 61%, transparent 63%); overflow: hidden; flex-shrink: 0; }
+  .sat-sweep { position: absolute; width: 50%; height: 50%; top: 0; left: 50%; background: linear-gradient(45deg, rgba(0,255,102,0.7), transparent 65%); transform-origin: bottom left; animation: sweep 2s linear infinite; }
+  .blip { position: absolute; width: 5px; height: 5px; background: #ff3333; border-radius: 50%; box-shadow: 0 0 6px #ff3333; animation: blink 0.8s infinite alternate; }
+  @keyframes sweep { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes blink { 0% { opacity: 0.2; } 100% { opacity: 1; } }
 
-  .bar { padding: 8px; background: #020f04; border-top: 1px solid #00ff41; display: flex; gap: 6px; align-items: center; z-index: 5; }
-  #msgIn { flex: 1; padding: 9px 12px; background: #010702; border: 1px solid #00ff41; color: #00ff41; border-radius: 3px; outline: none; font-size: 13px; }
+  .wave-box { flex: 1; min-height: 240px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+  #waveCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .skull-side { position: relative; z-index: 2; text-align: right; font-size: 16px; padding: 4px; text-shadow: 0 0 8px #00ff66; }
 
-  /* LIVE ORB OVERLAY */
-  #orbModal { position: fixed; inset: 0; background: rgba(1, 8, 3, 0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 25px; text-align: center; }
-  .cyber-orb { width: 170px; height: 170px; border-radius: 50%; border: 3px solid #00ff41; box-shadow: 0 0 50px #00ff41, inset 0 0 35px #00f0ff; display: flex; align-items: center; justify-content: center; font-size: 38px; animation: pulse 1.6s infinite alternate; cursor: pointer; }
-  @keyframes pulse { 0% { transform: scale(0.94); } 100% { transform: scale(1.08); } }
+  .locked-box { text-align: center; padding: 8px 4px; border: 1.5px solid #00ff66; background: rgba(0, 30, 10, 0.85); }
+  .locked-txt { font-size: 16px; font-weight: 900; letter-spacing: 2px; color: #00ff66; text-shadow: 0 0 10px #00ff66; }
+
+  #chatScreen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  #chatBox { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 88%; padding: 8px 10px; border: 1px solid #00ff66; font-size: 12.5px; line-height: 1.4; white-space: pre-wrap; }
+  .msg.user { align-self: flex-end; background: #032b11; }
+  .msg.bot { align-self: flex-start; background: #011408; color: #80ffaa; }
+  .in-bar { display: flex; gap: 5px; padding: 8px; border-top: 1px solid #00ff66; background: #020d05; }
+  .inp { flex: 1; background: #010803; border: 1px solid #00ff66; color: #00ff66; padding: 8px; font-size: 12px; outline: none; }
 </style>
 </head>
 <body>
 
-<canvas id="matrixCanvas"></canvas>
-<div id="hudBar">[KERNEL: AARU_HACKER_OS_V10] • [USER: ADITYA_SONI] • [CRYPTO: SHA-256] • [STATUS: ROOT_ONLINE]</div>
-
-<!-- LIVE ORB MODAL -->
-<div id="orbModal">
-  <div>
-    <h2 style="color:#00ff41;text-shadow:0 0 10px #00ff41;">⚡ CYBER LIVE VOICE ORB</h2>
-    <p id="orbText" style="color:#00f0ff;font-size:13px;margin-top:8px;">Tap Orb to speak or Test Voice...</p>
-  </div>
-  <div class="cyber-orb" onclick="listenVoice()">🎙️</div>
-  <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px;">
-    <button class="act-btn" onclick="speakNow('System Online Aadi! Hacker OS voice engine bilkul ready hai.')">🔊 TEST VOICE AUDIO</button>
-    <button class="act-btn" style="border-color:#ff3b3b;color:#ff3b3b;background:#2b0404;" onclick="document.getElementById('orbModal').style.display='none'">✕ EXIT ORB</button>
+<div class="top-bar">
+  <div>💀 <b>AARU // SKULL_OS</b> ☠️</div>
+  <div class="nav-btns">
+    <button class="h-btn active" id="btnHud" onclick="switchMode('hud')">💀 HUD</button>
+    <button class="h-btn" id="btnChat" onclick="switchMode('chat')">💬 AI CHAT</button>
+    <button class="h-btn" onclick="speakOut('Skull Matrix System Online Sir Aadi! Satellite radar, Wi-Fi and Bluetooth scanner active.')">🔊 ORB</button>
   </div>
 </div>
 
-<!-- SAVED CHATS DRAWER WITH 🗑️ DELETE BUTTONS -->
-<div id="drawerBg" onclick="toggleMenu(false)"></div>
-<div id="drawer">
-  <div class="dr-head">
-    <b style="color:#00ff41;">📁 SAVED LOGS / CHATS</b>
-    <div style="display:flex;gap:4px;">
-      <button class="btn-h red" onclick="wipeAllChats()">🗑️ WIPE ALL</button>
-      <button class="btn-h" onclick="toggleMenu(false)">✕</button>
+<div id="hudScreen">
+  <div class="left-col">
+    <div class="box">
+      <div class="box-title"><span>SYS_TIME // LIVE_NODE</span><span>💀 ☠️</span></div>
+      <div class="big-clock" id="clockTxt">01:08:32</div>
+      <div class="loc-line" id="locTxt">📍 KANPUR, UTTAR PRADESH [GPS_LOCK]</div>
+    </div>
+
+    <div class="box">
+      <div class="box-title"><span>📡 NEARBY WI-FI ROUTERS</span><span>6 ACTIVE</span></div>
+      <table class="h-tbl">
+        <thead><tr><th>SSID</th><th>MAC</th><th>CH</th><th>SIG</th></tr></thead>
+        <tbody id="wifiTbl"></tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <div class="box-title"><span>🔵 BLUETOOTH NETWORKS & DEVICES</span><span>SCANNING</span></div>
+      <table class="h-tbl">
+        <thead><tr><th>DEVICE</th><th>MAC_ID</th><th>RSSI</th><th>STATE</th></tr></thead>
+        <tbody id="btTbl"></tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <div class="box-title"><span>⚡ BATTERY & INTERNET SPEED</span><span>💀</span></div>
+      <div class="circles">
+        <div class="c-gauge"><b id="batVal">93%</b><span>BAT</span></div>
+        <div class="c-gauge"><b id="netVal">52M</b><span>MBPS</span></div>
+        <div class="c-gauge"><b id="cpuVal">31%</b><span>CPU</span></div>
+        <div class="c-gauge"><b id="stepVal">0</b><span>STEP</span></div>
+      </div>
+      <div style="font-size:9px;margin-top:3px;">
+        <div>MOBILE BATTERY: <span id="batState">93% READY</span></div>
+        <div class="bar-wrap"><div class="bar-fill" id="batBar" style="width:93%;"></div></div>
+        <div>INTERNET SPEED: <span id="speedTxt">52.4 Mbps (5G_UPLINK)</span></div>
+        <div class="bar-wrap"><div class="bar-fill" id="netBar" style="width:82%;"></div></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-title"><span>🛰️ SATELLITE RADAR & LIVE LOCATION</span><span>☠️</span></div>
+      <div class="radar-row">
+        <div class="sat-radar">
+          <div class="sat-sweep"></div>
+          <div class="blip" style="top:22px;left:50px;"></div>
+          <div class="blip" style="top:54px;left:22px;background:#00ff66;"></div>
+          <div class="blip" style="top:34px;left:28px;"></div>
+        </div>
+        <div style="font-size:8.5px;line-height:1.4;overflow:hidden;">
+          <div id="coordTxt" style="color:#fff;font-weight:bold;">LAT: 26.4499° N | LON: 80.3319° E</div>
+          <div id="areaTxt">LOC: AHIRWAN, KANPUR, UP</div>
+          <div style="color:#80ffaa;margin-top:2px;">[+] PASS CRACKED: 0x9F4A<br>[+] SAT_RADAR: LOCKED</div>
+        </div>
+      </div>
     </div>
   </div>
-  <button class="act-btn" style="margin:8px;width:calc(100% - 16px);" onclick="newChatSession()">＋ NEW TERMINAL SESSION</button>
-  <div id="chatList"></div>
-</div>
 
-<header>
-  <div class="brand">
-    <button class="btn-h" onclick="toggleMenu(true)">☰</button>
-    <span>⚡ AARU_OS</span>
+  <div class="right-col">
+    <div class="box" style="font-size:8.5px;line-height:1.35;">
+      <div class="box-title"><span>💀 ROOT SHELL</span><span>☠️</span></div>
+      <div>> user: aditya_soni</div>
+      <div>> pass: **********</div>
+      <div style="color:#80ffaa;">[+] ACCESS GRANTED</div>
+      <div id="miniCrack">> hash_892: CRACKED</div>
+    </div>
+
+    <div class="box wave-box">
+      <canvas id="waveCanvas"></canvas>
+      <div class="skull-side">💀<br>☠️<br><span style="font-size:9px;">ROOT</span></div>
+      <div class="skull-side" style="margin-top:auto;">☠️<br>💀<br><span style="font-size:9px;">HACK</span></div>
+    </div>
+
+    <div class="box locked-box">
+      <div style="font-size:22px;">💀 🔒 ☠️</div>
+      <div class="locked-txt">LOCKED</div>
+      <div style="font-size:8px;color:#80ffaa;">SHA-512 MAINFRAME</div>
+    </div>
   </div>
-  <div class="top-btns">
-    <span id="stepBtn" class="btn-h cyan" onclick="addStepManual()">👣 0</span>
-    <button class="btn-h" onclick="playMorningBrief()">☀️ BRIEF</button>
-    <button class="btn-h cyan" onclick="openOrb()">🔴 ORB</button>
-    <select id="personaSel" class="btn-h" onchange="setPersona(this.value)">
-      <option value="Elite Hacker & Cyber AI Aaru">🕵️ Hacker</option>
-      <option value="Sweet & Caring Best Friend Aaru">💖 Cute</option>
-      <option value="Savage Roast Mode">🔥 Roast</option>
-      <option value="Class 12 PCM Mentor">🎓 Mentor</option>
-    </select>
-    <button class="btn-h" onclick="toggleKeyBar()">🔑</button>
+</div>
+
+<div id="chatScreen">
+  <div style="padding:6px 8px;background:#031708;border-bottom:1px solid #00ff66;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+    <span>📁 SAVED CHATS (<span id="chatCount">1</span>)</span>
+    <div style="display:flex;gap:5px;">
+      <button class="h-btn" onclick="newSession()">＋ NEW</button>
+      <button class="h-btn red" onclick="deleteCurrentChat()">🗑️ DELETE</button>
+    </div>
   </div>
-</header>
-
-<div id="keyBar" style="display:none;padding:8px;background:#041c09;border-bottom:1px solid #00ff41;gap:6px;z-index:5;">
-  <input id="keyInp" class="inp" style="margin:0;flex:1;" placeholder="Paste Gemini API Key (AIzaSy...)">
-  <button class="btn-h" onclick="saveApiKey()">SAVE</button>
-</div>
-
-<div class="dock">
-  <span class="tab active" id="t_chat" onclick="openTab('chat')">💻 TERMINAL CHAT</span>
-  <span class="tab" id="t_ops" onclick="openTab('ops')">⚡ REAL-TIME OPS</span>
-  <span class="tab" id="t_chain" onclick="openTab('chain')">⛓️ BLOCKCHAIN</span>
-  <span class="tab" id="t_vision" onclick="openTab('vision')">👁️ VISION CAM</span>
-  <span class="tab" id="t_study" onclick="openTab('study')">📚 RAG & QUIZ</span>
-  <span class="tab" id="t_dev" onclick="openTab('dev')">📱 DEVICE & LLM</span>
-  <span class="tab" id="t_gst" onclick="openTab('gst')">🧾 GST BILL</span>
-</div>
-
-<!-- 1. CHAT PANEL -->
-<div id="p_chat" class="panel active" style="padding:0;">
+  <div id="sessionPills" style="display:flex;gap:5px;padding:5px 8px;overflow-x:auto;background:#010a03;border-bottom:1px solid #004d1f;"></div>
   <div id="chatBox"></div>
-</div>
-
-<!-- 2. REAL-TIME OPS PANEL -->
-<div id="p_ops" class="panel">
-  <div class="card">
-    <h3>⚡ Real-Time Cyber Task Operations</h3>
-    <div style="display:flex;justify-content:space-between;background:#010802;padding:6px 8px;border:1px solid #00f0ff;margin-bottom:8px;font-size:11px;">
-      <span id="sysClock">TIME: 00:00:00</span>
-      <span id="sysLoad">CPU: 21% | SECURE</span>
-    </div>
-    <input id="taskIn" class="inp" placeholder="Deploy new real-time mission (e.g. Gold Audit / Physics Revision)...">
-    <button class="act-btn" onclick="addTask()">🚀 DEPLOY REAL-TIME MISSION</button>
-    <div id="taskList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
-    <pre id="liveRadar" class="term">[RADAR_INIT] Monitoring Kanpur Node & Local Sensors...</pre>
+  <div class="in-bar">
+    <input id="msgIn" class="inp" placeholder="Type command for Aaru..." onkeypress="if(event.key==='Enter')sendChat()">
+    <button class="h-btn active" onclick="sendChat()">SEND</button>
   </div>
-</div>
-
-<!-- 3. BLOCKCHAIN PANEL -->
-<div id="p_chain" class="panel">
-  <div class="card">
-    <h3>⛓️ SHA-256 Decentralized Blockchain Ledger</h3>
-    <input id="txIn" class="inp" placeholder="Enter Transaction / Ledger Record (e.g. 22K Gold 5g Sold)...">
-    <button class="act-btn" onclick="mineNewBlock()">⛏️ MINE & SIGN SHA-256 BLOCK</button>
-    <div id="chainBox" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:11px;"></div>
-  </div>
-</div>
-
-<!-- 4. VISION CAM PANEL -->
-<div id="p_vision" class="panel">
-  <div class="card">
-    <h3>👁️ AI Optical Vision Scanner</h3>
-    <input type="file" accept="image/*" capture="environment" class="inp" onchange="loadImg(event)">
-    <img id="prevImg" style="max-width:100%;max-height:180px;display:none;border:1px solid #00ff41;margin-bottom:8px;">
-    <input id="visPrompt" class="inp" value="Scan this image. If it is a Class 12 question, solve it step by step.">
-    <button class="act-btn" onclick="scanVision()">🔍 EXECUTE OPTICAL AI SCAN</button>
-    <pre id="visOut" class="term">Waiting for optical frame...</pre>
-  </div>
-</div>
-
-<!-- 5. RAG & QUIZ PANEL -->
-<div id="p_study" class="panel">
-  <div class="card">
-    <h3>🎯 Class 12 PCM Hard Quiz & 📚 Local RAG</h3>
-    <select id="quizTopic" class="inp">
-      <option>Class 12 Physics (Electrostatics & Optics)</option>
-      <option>Class 12 Chemistry (Solutions & Haloalkanes)</option>
-      <option>Class 12 Maths (Matrices & Calculus)</option>
-    </select>
-    <button class="act-btn" onclick="runQuiz()">🎲 GENERATE HARD MCQ</button>
-    <pre id="quizOut" class="term">Select subject and generate question...</pre>
-    <textarea id="ragNote" class="inp" rows="2" style="margin-top:8px;" placeholder="Add formula/note to Local RAG memory..."></textarea>
-    <button class="btn-h" onclick="saveRagNote()">＋ INDEX NOTE</button>
-    <button class="btn-h cyan" onclick="queryRag()">🧠 ASK RAG</button>
-  </div>
-</div>
-
-<!-- 6. DEVICE AUTO & OFFLINE LLM -->
-<div id="p_dev" class="panel">
-  <div class="card">
-    <h3>📱 Hardware Control & 🧠 Snapdragon Offline LLM</h3>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-      <button class="btn-h" onclick="document.body.style.filter='brightness(1.8)';runTermux('termux-torch on')">🔦 TORCH ON</button>
-      <button class="btn-h" onclick="document.body.style.filter='none';runTermux('termux-torch off')">🔦 TORCH OFF</button>
-      <button class="btn-h cyan" onclick="runTermux('termux-battery-status')">🔋 BATTERY</button>
-      <button class="btn-h cyan" onclick="runTermux('df -h /storage/emulated/0')">💾 STORAGE</button>
-    </div>
-    <input id="shCmd" class="inp" value="uptime -p && uname -a" placeholder="Termux Shell or Offline LLM prompt...">
-    <button class="act-btn" onclick="runTermux(document.getElementById('shCmd').value)">⚡ EXECUTE ON TERMUX BRIDGE</button>
-    <pre id="devOut" class="term">Bridge ready on 127.0.0.1:3000...</pre>
-  </div>
-</div>
-
-<!-- 7. GST BILL PANEL -->
-<div id="p_gst" class="panel">
-  <div class="card">
-    <h3>🧾 Pari Jewellers GST Invoice (HSN 7113)</h3>
-    <input id="gCust" class="inp" placeholder="Customer Name">
-    <input id="gWt" type="number" class="inp" value="5.0" placeholder="Gold Weight (g)">
-    <input id="gRate" type="number" class="inp" value="7500" placeholder="Gold Rate per gram">
-    <button class="act-btn" onclick="calcGst()">⚡ GENERATE TAX INVOICE (3% GST)</button>
-    <pre id="gstOut" class="term">Invoice output...</pre>
-  </div>
-</div>
-
-<div class="bar">
-  <button class="btn-h cyan" onclick="openOrb()">🔴</button>
-  <button class="btn-h" onclick="listenVoice()">🎤</button>
-  <input id="msgIn" placeholder="Enter command or 'calc: 7500*5*1.03'..." onkeypress="if(event.key==='Enter')sendMsg()">
-  <button class="btn-h" style="background:#00ff41;color:#000;" onclick="sendMsg()">SEND</button>
 </div>
 
 <script>
-// MATRIX DIGITAL RAIN
-var cvs = document.getElementById('matrixCanvas'), ctx = cvs.getContext('2d');
-cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-var drops = Array(Math.floor(cvs.width / 14)).fill(1);
+function switchMode(m) {
+  document.getElementById('hudScreen').style.display = (m === 'hud') ? 'grid' : 'none';
+  document.getElementById('chatScreen').style.display = (m === 'chat') ? 'flex' : 'none';
+  document.getElementById('btnHud').classList.toggle('active', m === 'hud');
+  document.getElementById('btnChat').classList.toggle('active', m === 'chat');
+}
+
 setInterval(function() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.08)'; ctx.fillRect(0, 0, cvs.width, cvs.height);
-  ctx.fillStyle = '#00ff41'; ctx.font = '13px monospace';
-  for (var i = 0; i < drops.length; i++) {
-    ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), i * 14, drops[i] * 14);
-    if (drops[i] * 14 > cvs.height && Math.random() > 0.975) drops[i] = 0;
-    drops[i]++;
-  }
-}, 55);
-
-var apiKey = localStorage.getItem('API_KEY') || '';
-var persona = 'Elite Hacker & Cyber AI Aaru';
-function toggleKeyBar() {
-  var b = document.getElementById('keyBar');
-  b.style.display = b.style.display === 'flex' ? 'none' : 'flex';
-  document.getElementById('keyInp').value = apiKey;
-}
-function saveApiKey() {
-  apiKey = document.getElementById('keyInp').value.trim();
-  localStorage.setItem('API_KEY', apiKey);
-  document.getElementById('keyBar').style.display = 'none';
-  appendMsg('[SYS_OK] Gemini API Key Encrypted & Saved.', 'bot', true);
-}
-function setPersona(p) { persona = p; appendMsg('[PERSONA_SHIFT] Mode: ' + p, 'bot', false); }
-
-function openTab(id) {
-  ['chat','ops','chain','vision','study','dev','gst'].forEach(function(k) {
-    document.getElementById('p_' + k).classList.toggle('active', k === id);
-    document.getElementById('t_' + k).classList.toggle('active', k === id);
-  });
-}
-
-// 👣 STEP COUNTER (CALIBRATED)
-var steps = parseInt(localStorage.getItem('AARU_STEPS') || '0');
-document.getElementById('stepBtn').innerText = '👣 ' + steps;
-function addStepManual() { steps++; localStorage.setItem('AARU_STEPS', steps); document.getElementById('stepBtn').innerText = '👣 ' + steps; }
-var lastStep = 0;
-window.addEventListener('devicemotion', function(e) {
-  var a = e.accelerationIncludingGravity || e.acceleration;
-  if (!a) return;
-  var m = Math.sqrt((a.x||0)*(a.x||0) + (a.y||0)*(a.y||0) + (a.z||0)*(a.z||0));
-  if (Math.abs(m - 9.81) > 2.1 && Date.now() - lastStep > 340) {
-    lastStep = Date.now(); addStepManual();
-  }
-}, true);
-
-// 🔊 VOICE TTS & ORB
-var audioPlayer = new Audio();
-function speakNow(txt) {
-  if (!txt) return;
-  var clean = txt.replace(/[*#_~`]/g, '').substring(0, 180);
-  document.getElementById('orbText').innerText = clean;
-  audioPlayer.src = 'https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=' + encodeURIComponent(clean);
-  audioPlayer.play().catch(function() {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(clean); u.lang = 'hi-IN';
-      window.speechSynthesis.speak(u);
-    }
-  });
-}
-function openOrb() { document.getElementById('orbModal').style.display = 'flex'; speakNow('Aaru Hacker Orb Online. Bolo Aadi!'); }
-var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-var rec = SR ? new SR() : null;
-if (rec) {
-  rec.lang = 'hi-IN';
-  rec.onresult = function(e) {
-    document.getElementById('msgIn').value = e.results[0][0].transcript;
-    sendMsg(true);
-  };
-}
-function listenVoice() {
-  if (rec) { try { rec.start(); document.getElementById('orbText').innerText = '🎧 Listening...'; } catch(e){} }
-  else { var q = prompt('Speak / Type command:'); if (q) { document.getElementById('msgIn').value = q; sendMsg(true); } }
-}
-
-// 🗑️ SAVED CHATS WITH INDIVIDUAL DELETE & WIPE ALL
-var chats = JSON.parse(localStorage.getItem('AARU_HACK_CHATS') || '[]');
-var curId = '';
-function saveChats() { localStorage.setItem('AARU_HACK_CHATS', JSON.stringify(chats)); renderDrawer(); }
-function newChatSession() {
-  curId = 's_' + Date.now();
-  chats.unshift({ id: curId, title: 'Session ' + new Date().toLocaleTimeString(), msgs: [{ r: 'bot', t: '🟢 [AARU_HACKER_OS V10 ONLINE]\nWelcome Operator Aditya Soni (Aadi). Blockchain, Real-Time Ops, Vision Cam & Chat Delete active.' }] });
-  saveChats(); loadChat(curId); toggleMenu(false);
-}
-function deleteOneChat(id, ev) {
-  ev.stopPropagation();
-  chats = chats.filter(function(c){ return c.id !== id; });
-  if (!chats.length) newChatSession();
-  else { if (curId === id) curId = chats[0].id; saveChats(); loadChat(curId); }
-}
-function wipeAllChats() { chats = []; localStorage.removeItem('AARU_HACK_CHATS'); newChatSession(); }
-function loadChat(id) {
-  curId = id;
-  var box = document.getElementById('chatBox'); box.innerHTML = '';
-  var found = chats.find(function(c){ return c.id === id; });
-  if (found) found.msgs.forEach(function(m){ appendMsg(m.t, m.r, false); });
-  renderDrawer();
-}
-function renderDrawer() {
-  var list = document.getElementById('chatList'); list.innerHTML = '';
-  chats.forEach(function(c) {
-    var d = document.createElement('div');
-    d.className = 'c-item' + (c.id === curId ? ' active' : '');
-    d.onclick = function() { loadChat(c.id); toggleMenu(false); };
-    d.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;">💻 ' + c.title + '</span>' +
-                  '<button class="btn-h red" onclick="deleteOneChat(\'' + c.id + '\', event)">🗑️ DEL</button>';
-    list.appendChild(d);
-  });
-}
-function toggleMenu(open) {
-  document.getElementById('drawer').classList.toggle('open', open);
-  document.getElementById('drawerBg').style.display = open ? 'block' : 'none';
-}
-
-// ⚡ REAL-TIME OPS
-var tasks = JSON.parse(localStorage.getItem('AARU_TASKS') || '[{"id":1,"txt":"Monitor Gold Rate & GST","t":' + Date.now() + '},{"id":2,"txt":"Class 12 PCM Matrix Practice","t":' + Date.now() + '}]');
-function addTask() {
-  var inp = document.getElementById('taskIn'); if (!inp.value.trim()) return;
-  tasks.unshift({ id: Date.now(), txt: inp.value.trim(), t: Date.now() });
-  localStorage.setItem('AARU_TASKS', JSON.stringify(tasks)); inp.value = ''; renderTasks();
-}
-function delTask(id) { tasks = tasks.filter(function(x){ return x.id !== id; }); localStorage.setItem('AARU_TASKS', JSON.stringify(tasks)); renderTasks(); }
-function renderTasks() {
-  var b = document.getElementById('taskList'); if (!b) return;
-  b.innerHTML = tasks.map(function(x) {
-    var sec = Math.floor((Date.now() - x.t) / 1000);return '<div style="background:#031707;border:1px solid #00ff41;padding:7px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;">' +
-           '<span>🟢 ' + x.txt + ' <b style="color:#00f0ff;">[' + sec + 's]</b></span>' +
-           '<button class="btn-h red" onclick="delTask(' + x.id + ')">✓ DONE</button></div>';
-  }).join('');
-}
-setInterval(function() {
-  document.getElementById('sysClock').innerText = 'TIME: ' + new Date().toLocaleTimeString();
-  document.getElementById('sysLoad').innerText = 'CPU: ' + Math.floor(15 + Math.random()*25) + '% | ENCRYPTED';
-  renderTasks();
+  document.getElementById('clockTxt').innerText = new Date().toTimeString().split(' ')[0];
+  document.getElementById('cpuVal').innerText = Math.floor(22 + Math.random()*30) + '%';
+  document.getElementById('miniCrack').innerText = '> hash_' + Math.floor(100+Math.random()*899) + ': CRACKED';
 }, 1000);
 
-// ⛓️ BLOCKCHAIN MINER
-var chain = JSON.parse(localStorage.getItem('AARU_BC') || '[{"i":0,"d":"GENESIS BLOCK // ADITYA SONI","p":"0000000000","h":"0000aaru7f9c2b1e","n":4096}]');
-function hashStr(s) {
-  var h = 0x811c9dc5;
-  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return '0000' + (h >>> 0).toString(16).padStart(8, '0') + Date.now().toString(16).slice(-6);
+if (navigator.getBattery) {
+  navigator.getBattery().then(function(b) {
+    function up() {
+      var l = Math.round(b.level * 100);
+      document.getElementById('batVal').innerText = l + '%';
+      document.getElementById('batBar').style.width = l + '%';
+      document.getElementById('batState').innerText = l + '% ' + (b.charging ? '⚡ CHARGING' : '🔋 ACTIVE');
+    }
+    up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up);
+  });
 }
-function mineNewBlock() {
-  var inp = document.getElementById('txIn'), d = inp.value.trim() || 'Smart Contract Tx';
-  var prev = chain[0], nonce = Math.floor(1000 + Math.random()*90000);
-  chain.unshift({ i: prev.i + 1, d: d, p: prev.h, h: hashStr(d + prev.h + nonce), n: nonce });
-  localStorage.setItem('AARU_BC', JSON.stringify(chain)); inp.value = ''; renderChain();
+
+setInterval(function() {
+  var sp = (38 + Math.random()*24).toFixed(1);
+  document.getElementById('netVal').innerText = Math.round(sp) + 'M';
+  document.getElementById('speedTxt').innerText = sp + ' Mbps (LIVE_LINK)';
+  document.getElementById('netBar').style.width = Math.min(100, Math.round(sp * 1.4)) + '%';
+}, 2000);
+
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(function(p) {
+    var la = p.coords.latitude.toFixed(4), lo = p.coords.longitude.toFixed(4);
+    document.getElementById('coordTxt').innerText = 'LAT: ' + la + '° N | LON: ' + lo + '° E';
+    document.getElementById('locTxt').innerText = '📍 GPS: ' + la + ', ' + lo + ' (KANPUR)';
+  });
 }
-function renderChain() {
-  document.getElementById('chainBox').innerHTML = chain.map(function(b) {
-    return '<div style="background:#010903;border:1px solid #00ff41;padding:8px;">' +
-           '<div style="color:#00f0ff;font-weight:bold;">BLOCK #' + b.i + ' [NONCE: ' + b.n + ']</div>' +
-           '<div style="color:#fff;margin:3px 0;">DATA: ' + b.d + '</div>' +
-           '<div style="color:#00ff41;font-size:10px;">HASH: ' + b.h + ' | PREV: ' + b.p + '</div></div>';
+
+var wifis = [
+  { s: 'JioFiber_Kanpur_5G', m: 'A4:2B:B0:99', c: '36', g: -41 },
+  { s: 'Pari_Jewellers_Net', m: 'F0:9F:C2:12', c: '06', g: -38 },
+  { s: 'Airtel_Xstream_AP', m: 'C8:3A:35:41', c: '11', g: -54 },
+  { s: 'TP-Link_CyberNode', m: '50:C7:BF:88', c: '01', g: -67 },
+  { s: 'BSNL_FTTH_2.4G', m: '18:D6:C7:30', c: '09', g: -73 }
+];
+var bts = [
+  { n: '🎧 Aadi_Neckband', m: '41:42:F9:8A', r: -36, s: 'ACTIVE' },
+  { n: '📱 Galaxy_S24_BLE', m: '7C:D9:5C:10', r: -57, s: 'NEARBY' },
+  { n: '🔊 Boat_Airdopes', m: '08:EB:ED:92', r: -63, s: 'READY' },
+  { n: '⌚ SmartWatch_BLE', m: 'E2:19:44:7B', r: -76, s: 'BEACON' }
+];
+function updateTables() {
+  document.getElementById('wifiTbl').innerHTML = wifis.map(function(w) {
+    return '<tr><td>' + w.s + '</td><td>' + w.m + '</td><td>' + w.c + '</td><td>' + (w.g + Math.floor(Math.random()*4-2)) + 'dBm</td></tr>';
+  }).join('');
+  document.getElementById('btTbl').innerHTML = bts.map(function(b) {
+    return '<tr><td>' + b.n + '</td><td>' + b.m + '</td><td>' + (b.r + Math.floor(Math.random()*4-2)) + 'dBm</td><td>' + b.s + '</td></tr>';
   }).join('');
 }
-renderChain();
+setInterval(updateTables, 1800); updateTables();
 
-// 👁️ VISION, 📚 RAG/QUIZ, 📱 DEVICE, 🧾 GST, ☀️ BRIEF
-var imgB64 = '';
-function loadImg(e) {
-  var r = new FileReader();
-  r.onload = function(ev) {
-    imgB64 = ev.target.result.split(',')[1];
-    var im = document.getElementById('prevImg'); im.src = ev.target.result; im.style.display = 'block';
-  };
-  r.readAsDataURL(e.target.files[0]);
-}
-async function scanVision() {
-  var out = document.getElementById('visOut'); out.innerText = '⏳ Scanning frame...';
-  if (!apiKey) { out.innerText = 'Save Gemini API Key in 🔑 first.'; return; }
-  try {
-    var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ contents: [{ parts: [{ text: document.getElementById('visPrompt').value }, { inlineData: { mimeType: 'image/jpeg', data: imgB64 } }] }] })
-    });
-    var d = await r.json(); var t = d.candidates[0].content.parts[0].text;
-    out.innerText = t; speakNow(t);
-  } catch(e) { out.innerText = 'Select a photo and check API Key.'; }
-}
-
-var ragNotes = JSON.parse(localStorage.getItem('AARU_RAG') || '["Raoult Law: P = P0 * X","Matrix Inverse: adj(A)/|A|"]');
-function saveRagNote() {
-  var v = document.getElementById('ragNote').value.trim(); if (!v) return;
-  ragNotes.unshift(v); localStorage.setItem('AARU_RAG', JSON.stringify(ragNotes));
-  document.getElementById('quizOut').innerText = '✅ Note Indexed! Total Notes: ' + ragNotes.length;
-}
-async function queryRag() {
-  var q = document.getElementById('ragNote').value.trim() || 'Summarize my notes';
-  document.getElementById('quizOut').innerText = '⏳ Searching RAG...';
-  var ans = await askAI('Notes: ' + ragNotes.join(' | ') + '\nQuestion: ' + q);
-  document.getElementById('quizOut').innerText = ans;
-}
-async function runQuiz() {
-  var s = document.getElementById('quizTopic').value;
-  document.getElementById('quizOut').innerText = '⏳ Generating MCQ on ' + s + '...';
-  document.getElementById('quizOut').innerText = await askAI('Create 1 hard Class 12 MCQ with 4 options and answer on: ' + s);
-}
-function playMorningBrief() {
-  var m = 'Good Morning Operator Aadi! Kanpur Node active hai. Aaj tumhare steps ' + steps + ' hain aur ' + tasks.length + ' real-time missions active hain.';
-  appendMsg(m, 'bot', true); speakNow(m);
-}
-function runTermux(cmd) {
-  document.getElementById('devOut').innerText = '⏳ Executing: ' + cmd;
-  fetch('http://127.0.0.1:3000/clang', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code: '#!sh\n' + cmd }) })
-    .then(function(r){ return r.json(); }).then(function(d){ document.getElementById('devOut').innerText = d.output; })
-    .catch(function(){ document.getElementById('devOut').innerText = 'Local Termux server offline.'; });
-}
-function calcGst() {
-  var c = document.getElementById('gCust').value || 'Walk-in', w = parseFloat(document.getElementById('gWt').value)||0, r = parseFloat(document.getElementById('gRate').value)||0;
-  var base = w * r, gst = base * 0.03;
-  document.getElementById('gstOut').innerText = 'PARI JEWELLERS (KANPUR)\nCustomer: ' + c + '\nBase: Rs ' + base.toFixed(0) + ' | 3% GST: Rs ' + gst.toFixed(0) + '\nGRAND TOTAL: Rs ' + Math.round(base + gst);
-}
-
-// 💬 AI ENGINE & CHAT
-async function askAI(prompt) {
-  var sys = 'You are Aaru Hacker OS v10 created by Aditya Soni (Aadi) from Kanpur. Persona: ' + persona + '. Reply in Hinglish.';
-  if (apiKey && apiKey.startsWith('AIza')) {
-    try {
-      var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ parts: [{ text: sys + '\nUser: ' + prompt }] }] })
-      });
-      var d = await r.json();
-      if (d.candidates && d.candidates[0]) return d.candidates[0].content.parts[0].text;
-    } catch(e){}
+var wc = document.getElementById('waveCanvas'), ctx = wc.getContext('2d'), ph = 0;
+var nums = [{x:15,y:20,v:1.5,n:1251},{x:60,y:80,v:1.9,n:824},{x:30,y:140,v:1.3,n:9854},{x:70,y:210,v:2.0,n:65147},{x:25,y:260,v:1.7,n:754}];
+function animWave() {
+  wc.width = wc.clientWidth || 120; wc.height = wc.clientHeight || 260;
+  ctx.clearRect(0,0,wc.width,wc.height);
+  for (var y = 0; y < wc.height; y += 7) {
+    var x1 = wc.width/2 + Math.sin(y*0.035 + ph)*(wc.width*0.34);
+    var x2 = wc.width/2 + Math.cos(y*0.035 + ph)*(wc.width*0.28);
+    ctx.fillStyle = 'rgba(0,255,102,0.35)';
+    for (var dx = Math.min(x1,x2); dx < Math.max(x1,x2); dx += 5) ctx.fillRect(dx, y, 2, 2);
   }
-  var r2 = await fetch('https://text.pollinations.ai/openai', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ model: 'openai', messages: [{ role: 'system', content: sys }, { role: 'user', content: prompt }] })
+  ph += 0.06;
+  ctx.fillStyle = '#00ff66'; ctx.font = 'bold 10px monospace';
+  nums.forEach(function(d) {
+    ctx.fillText(String(d.n), d.x, d.y); d.y += d.v;
+    if (d.y > wc.height) { d.y = 0; d.x = 8 + Math.floor(Math.random()*(wc.width-40)); d.n = Math.floor(100+Math.random()*99000); }
   });
-  var d2 = await r2.json();
-  return d2.choices[0].message.content;
+  requestAnimationFrame(animWave);
+}
+animWave();
+
+var tts = new Audio();
+function speakOut(t) {
+  var c = (t||'').substring(0, 180);
+  tts.src = 'https://translate.googleapis.com/translate_tts?client=tw-ob&ie=UTF-8&tl=hi&q=' + encodeURIComponent(c);
+  tts.play().catch(function(){ if(window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(c)); });
 }
 
-async function sendMsg(voiceMode) {
-  var inp = document.getElementById('msgIn'), m = inp.value.trim();
-  if (!m) return; inp.value = '';
-  appendMsg(m, 'user', true);
-  if (/^calc:/i.test(m)) {
-    try { var res = Function('return (' + m.replace(/^calc:/i, '') + ')')(); appendMsg('🧮 CALC_OUT: ' + res, 'bot', true); return; } catch(e){}
-  }
-  var wait = appendMsg('⏳ [DECRYPTING_RESPONSE...]', 'bot', false);
+var chats = JSON.parse(localStorage.getItem('SK_CHATS') || '[{"id":"1","title":"Root_01","msgs":[{"r":"bot","t":"💀 Skull Matrix OS Ready Aadi!"}]}]');
+var curId = chats[0].id;
+function renderChat() {
+  document.getElementById('chatCount').innerText = chats.length;
+  document.getElementById('sessionPills').innerHTML = chats.map(function(c) {
+    return '<button class="h-btn ' + (c.id===curId?'active':'') + '" onclick="curId=\''+c.id+'\';renderChat()">' + c.title + '</button>';
+  }).join('');
+  var cur = chats.find(function(c){return c.id===curId;}) || chats[0];
+  document.getElementById('chatBox').innerHTML = cur.msgs.map(function(m){ return '<div class="msg '+m.r+'">'+m.t+'</div>'; }).join('');
+}
+function newSession() { var id='s_'+Date.now(); chats.unshift({id:id,title:'Node_'+chats.length,msgs:[{r:'bot',t:'💀 New Session.'}]}); curId=id; localStorage.setItem('SK_CHATS',JSON.stringify(chats)); renderChat(); }
+function deleteCurrentChat() { chats = chats.filter(function(c){return c.id!==curId;}); if(!chats.length) newSession(); else { curId=chats[0].id; localStorage.setItem('SK_CHATS',JSON.stringify(chats)); renderChat(); } }
+renderChat();
+
+async function sendChat() {
+  var inp = document.getElementById('msgIn'), q = inp.value.trim(); if(!q) return; inp.value = '';
+  var cur = chats.find(function(c){return c.id===curId;}); cur.msgs.push({r:'user',t:q}); renderChat();
   try {
-    var reply = await askAI(m);
-    wait.remove(); appendMsg(reply, 'bot', true);
-    if (voiceMode) speakNow(reply);
-  } catch(e) { wait.innerText = '⚠️ Network / API Error.'; }
+    var r = await fetch('https://text.pollinations.ai/openai', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',messages:[{role:'system',content:'You are Aaru Skull Matrix AI created by Aditya Soni in Kanpur. Reply in Hinglish.'},{role:'user',content:q}]})});
+    var d = await r.json(); var a = d.choices[0].message.content;
+    cur.msgs.push({r:'bot',t:a}); localStorage.setItem('SK_CHATS',JSON.stringify(chats)); renderChat(); speakOut(a);
+  } catch(e){}
 }
-
-function appendMsg(txt, role, save) {
-  var b = document.getElementById('chatBox'), d = document.createElement('div');
-  d.className = 'msg ' + role; d.innerText = txt;
-  b.appendChild(d); b.scrollTop = b.scrollHeight;
-  if (save) {
-    var c = chats.find(function(x){ return x.id === curId; });
-    if (c) { c.msgs.push({ r: role, t: txt }); if (c.msgs.length === 2) c.title = txt.substring(0, 22); saveChats(); }
-  }
-  return d;
-}
-
-if (!chats.length) newChatSession(); else loadChat(chats[0].id);
 </script>
-<script src="hack_hud.js"></script>
 </body>
 </html>
